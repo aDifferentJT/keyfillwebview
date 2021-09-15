@@ -63,9 +63,9 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         curl -o sdl2.tar.bz2 https://www.libsdl.org/release/SDL2-2.0.16-win32-x64.zip
-        mkdir sdl2
-        tar xf sdl2.tar.bz2 -C sdl2 --strip-components 1
-        echo "SDL2_ROOT=${PWD}/sdl2" >> $GITHUB_ENV
+        unzip SDL2-2.0.16-win32-x64.zip
+        ls
+        echo "SDL2_ROOT=${PWD}/SDL2" >> $GITHUB_ENV
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
