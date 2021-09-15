@@ -65,10 +65,9 @@ jobs:
     - name: Install boost (Windows)
       if: runner.os == 'Windows'
       run: |
-        curl -L -o install_boost.exe https://downloads.sourceforge.net/project/boost/boost-binaries/1.77.0/boost_1_77_0-msvc-14.2-64.exe
-        ./install_boost.exe
-        ls "C:/Program Files"
-        echo "Boost_INCLUDE_DIR=C:/Program Files/boost" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
+        curl -o boost.7z https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.7z
+        7z x boost.7z
+        mv boost_1_77_0 "C:/Program Files/boost"
       
     - name: Install SDL2 (Windows)
       if: runner.os == 'Windows'
