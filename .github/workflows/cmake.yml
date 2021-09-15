@@ -46,6 +46,7 @@ jobs:
 
     - name: Extract CEF (Windows)
       if: runner.os == 'Windows'
+      shell: bash
       run: |
         7z x cef.tar.bz2
         7z x cef.tar
@@ -72,6 +73,7 @@ jobs:
       
     - name: Install SDL2 (Windows)
       if: runner.os == 'Windows'
+      shell: bash
       run: |
         curl -o SDL2.zip https://www.libsdl.org/release/SDL2-devel-2.0.16-VC.zip
         unzip SDL2.zip
