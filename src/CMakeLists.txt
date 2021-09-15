@@ -47,6 +47,8 @@ include_directories(${Boost_INCLUDE_DIRS})
 #
 
 if(OS_LINUX)
+  add_compile_options(-fexceptions)
+  
   # Executable target.
   add_executable(${CEF_TARGET} ${CEFSIMPLE_SRCS})
   SET_EXECUTABLE_TARGET_PROPERTIES(${CEF_TARGET})
