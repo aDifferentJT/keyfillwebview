@@ -1,6 +1,7 @@
 #ifndef WebServer_hpp
 #define WebServer_hpp
 
+#define BOOST_NO_EXCEPTIONS
 #define BOOST_BEAST_USE_STD_STRING_VIEW
 
 #include <boost/asio.hpp>
@@ -12,6 +13,13 @@ namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 namespace asio = boost::asio;           // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+
+namespace boost {
+  void throw_exception(std::exception const & e) {
+    std::cerr << e.what();
+    std::terminate();
+  }
+}
 
 template <typename HTTPHandler>
 class WebServer;
