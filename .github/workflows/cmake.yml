@@ -24,19 +24,19 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Download CEF (Linux)
-      if: runner.os == "Linux"
+      if: runner.os == 'Linux'
       uses: wei/wget@v1
       with:
         args: -O cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_linux64_minimal.tar.bz2
 
     - name: Download CEF (macOS)
-      if: runner.os == "macOS"
+      if: runner.os == 'macOS'
       uses: wei/wget@v1
       with:
         args: -O cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_macosx64_minimal.tar.bz2
 
     - name: Download CEF (Windows)
-      if: runner.os == "Windows"
+      if: runner.os == 'Windows'
       uses: wei/wget@v1
       with:
         args: -O cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_windows64_minimal.tar.bz2
