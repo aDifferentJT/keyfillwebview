@@ -198,8 +198,8 @@ if(OS_WINDOWS)
     set(SDL2_ROOT $ENV{HOME}/SDL2)
   endif()
 
-  find_library(SDL2_LIB SDL2 HINTS "$SDL2_ROOT/lib/x64")
-  find_file(SDL2_DLL SDL2.dll HINTS "$SDL2_ROOT/lib/x64")
+  find_library(SDL2_LIB SDL2 HINTS "${SDL2_ROOT}/lib/x64")
+  find_file(SDL2_DLL SDL2.dll HINTS "${SDL2_ROOT}/lib/x64")
   target_link_libraries(${CEF_TARGET} ${SDL2_LIB})
 
   if(USE_SANDBOX)
