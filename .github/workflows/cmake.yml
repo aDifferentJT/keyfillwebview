@@ -65,7 +65,7 @@ jobs:
     - name: Install boost (Windows)
       if: runner.os == 'Windows'
       run: |
-        curl -o boost.7z https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.7z
+        curl -L -o boost.7z https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.7z
         7z x boost.7z
         mv boost_1_77_0 "C:/Program Files/boost"
       
