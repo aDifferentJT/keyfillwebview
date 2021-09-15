@@ -67,9 +67,8 @@ jobs:
       run: |
         curl -L -o install_boost.exe https://downloads.sourceforge.net/project/boost/boost-binaries/1.77.0/boost_1_77_0-msvc-14.2-64.exe
         ./install_boost.exe
-        ls C:/
-        ls D:/
-        echo "Boost_INCLUDE_DIR=C:/Boost" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
+        ls C:/Program Files/boost/boost_1_77_0
+        echo "Boost_INCLUDE_DIR=C:/Program Files/boost" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
       
     - name: Install SDL2 (Windows)
       if: runner.os == 'Windows'
