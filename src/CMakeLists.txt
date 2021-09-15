@@ -194,9 +194,9 @@ if(OS_WINDOWS)
 
   if(DEFINED ENV{SDL2_ROOT})
     set(SDL2_ROOT $ENV{SDL2_ROOT})
-  else
+  else()
     set(SDL2_ROOT $ENV{HOME}/SDL2)
-  endif
+  endif()
 
   find_library(SDL2_LIB SDL2 HINTS "$SDL2_ROOT/lib/x64")
   find_file(SDL2_DLL SDL2.dll HINTS "$SDL2_ROOT/lib/x64")
