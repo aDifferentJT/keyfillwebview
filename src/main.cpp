@@ -241,7 +241,6 @@ struct HTTPHandler {
 
       return callback(HTTP::Response{req, HTTP::Response::Status::Ok, "", "text/html"});
 #else
-#warning Shutdown not supported
       return callback(HTTP::Response{req, HTTP::Response::Status::NotImplemented, "Shutdown not yet implemented for this OS", "text/html"});
 #endif
     } else if (req.target == "/" || req.target == "/?") {
