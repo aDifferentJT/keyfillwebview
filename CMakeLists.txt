@@ -176,7 +176,7 @@ set_property(GLOBAL PROPERTY OS_FOLDERS ON)
 #    files as an example.
 # D. Comment in these lines:
 #
-if(DEFINED $ENV{CEF_ROOT})
+if(DEFINED ENV{CEF_ROOT})
   set(CEF_ROOT $ENV{CEF_ROOT})
 else()
   if(OS_LINUX)

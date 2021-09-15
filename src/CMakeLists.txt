@@ -192,7 +192,7 @@ if(OS_WINDOWS)
 
   include_directories("C:/Users/JT/SDL2/include")
 
-  if(DEFINED $ENV{SDL2_ROOT})
+  if(DEFINED ENV{SDL2_ROOT})
     set(SDL2_ROOT $ENV{SDL2_ROOT})
   else
     set(SDL2_ROOT $ENV{HOME}/SDL2)
