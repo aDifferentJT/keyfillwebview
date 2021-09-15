@@ -32,10 +32,6 @@ jobs:
       if: runner.os == 'macOS'
       run: curl -o cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_macosx64_minimal.tar.bz2
 
-    - name: Download CEF (Windows)
-      if: runner.os == 'Windows'
-      run: curl -o cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_windows64_minimal.tar.bz2
-
     - name: Extract CEF (non-Windows)
       if: runner.os != 'Windows'
       run: |
@@ -44,13 +40,15 @@ jobs:
         echo "CEF_ROOT=${PWD}/cef" >> $GITHUB_ENV
         ls cef/
 
+    - name: Download CEF (Windows)
+      if: runner.os == 'Windows'
+      run: curl -o cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_windows64_minimal.tar.bz2
+
     - name: Extract CEF (Windows)
       if: runner.os == 'Windows'
       run: |
-        mkdir cef
-        7z x cef.tar.bz2 -ocef
-        echo "CEF_ROOT=${PWD}/cef" >> $GITHUB_ENV
-        ls cef/
+        7z x cef.tar.bz2 -so | 7z x -si -ttar
+        echo "CEF_ROOT=${PWD}/cef_binary_93.1.11+g9e254fa+chromium-93.0.4577.63_windows64_minimal" >> $GITHUB_ENV
 
     - name: Install boost and SDL2 (Linux)
       if: runner.os == 'Linux'
@@ -66,12 +64,14 @@ jobs:
 
     - name: Install boost (Windows)
       if: runner.os == 'Windows'
-      run: choco install boost-msvc-14.2
+      run: |
+        curl -L -o install_boost.exe https://downloads.sourceforge.net/project/boost/boost-binaries/1.77.0/boost_1_77_0-msvc-14.2-64.exe
+        ./install_boost.exe
       
     - name: Install SDL2 (Windows)
       if: runner.os == 'Windows'
       run: |
-        curl -o SDL2.zip https://www.libsdl.org/release/SDL2-2.0.16-win32-x64.zip
+        curl -o SDL2.zip https://www.libsdl.org/release/SDL2-devel-2.0.16-VC.zip
         unzip SDL2.zip
         ls
         echo "SDL2_ROOT=${PWD}/SDL2" >> $GITHUB_ENV
