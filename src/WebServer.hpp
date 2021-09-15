@@ -19,6 +19,11 @@ namespace boost {
     std::cerr << e.what();
     std::terminate();
   }
+
+  void throw_exception(std::exception const & e, boost::source_location const & loc) {
+    std::cerr << e.what() << "at " << loc;
+    std::terminate();
+  }
 }
 
 template <typename HTTPHandler>
