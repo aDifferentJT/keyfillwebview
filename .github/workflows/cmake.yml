@@ -58,6 +58,14 @@ jobs:
     - name: Install boost (Windows)
       if: runner.os == 'Windows'
       run: choco install boost-msvc-14.2
+      
+    - name: Install SDL2 (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        curl -o sdl2.tar.bz2 https://www.libsdl.org/release/SDL2-2.0.16-win32-x64.zip
+        mkdir sdl2
+        tar xf sdl2.tar.bz2 -C sdl2 --strip-components 1
+        echo "SDL2_ROOT=${PWD}/sdl2" >> $GITHUB_ENV
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
