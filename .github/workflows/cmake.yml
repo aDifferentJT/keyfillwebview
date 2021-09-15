@@ -36,8 +36,8 @@ jobs:
       run: curl -o cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_windows64_minimal.tar.bz2
 
     - name: Extract CEF
-      run:
-        tar -xf cef.tar.bz2;
+      run: |
+        tar -xf cef.tar.bz2
         set CEF_ROOT=${PWD}/cef
 
     - name: Configure CMake
