@@ -36,10 +36,19 @@ jobs:
       if: runner.os == 'Windows'
       run: curl -o cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_windows64_minimal.tar.bz2
 
-    - name: Extract CEF
+    - name: Extract CEF (non-Windows)
+      if: runner.os != 'Windows'
       run: |
         mkdir cef
         tar xf cef.tar.bz2 -C cef --strip-components 1
+        echo "CEF_ROOT=${PWD}/cef" >> $GITHUB_ENV
+        ls cef/
+
+    - name: Extract CEF (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        mkdir cef
+        7z x cef.tar.bz2 -o cef
         echo "CEF_ROOT=${PWD}/cef" >> $GITHUB_ENV
         ls cef/
 
