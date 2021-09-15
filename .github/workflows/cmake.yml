@@ -49,6 +49,7 @@ jobs:
       run: |
         7z x cef.tar.bz2 -so | 7z x -si -ttar
         echo "CEF_ROOT=${PWD}/cef_binary_93.1.11+g9e254fa+chromium-93.0.4577.63_windows64_minimal" >> $GITHUB_ENV
+        ls cef_binary_93.1.11+g9e254fa+chromium-93.0.4577.63_windows64_minimal
 
     - name: Install boost and SDL2 (Linux)
       if: runner.os == 'Linux'
