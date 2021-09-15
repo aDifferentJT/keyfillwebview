@@ -67,7 +67,7 @@ jobs:
     - name: Install boost (Windows)
       if: runner.os == 'Windows'
       run: |
-        curl -o install_boost.exe https://sourceforge.net/projects/boost/files/boost-binaries/1.77.0/boost_1_77_0-msvc-14.2-64.exe/download
+        curl -L -o install_boost.exe https://downloads.sourceforge.net/project/boost/boost-binaries/1.77.0/boost_1_77_0-msvc-14.2-64.exe
         ./install_boost.exe
       
     - name: Install SDL2 (Windows)
