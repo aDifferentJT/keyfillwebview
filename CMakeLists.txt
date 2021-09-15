@@ -176,6 +176,7 @@ set_property(GLOBAL PROPERTY OS_FOLDERS ON)
 #    files as an example.
 # D. Comment in these lines:
 #
+set(CEF_ROOT ENV{CEF_ROOT})
 if(NOT DEFINED CEF_ROOT)
   if(OS_LINUX)
     set(CEF_ROOT "/opt/cef")
