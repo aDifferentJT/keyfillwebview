@@ -6,12 +6,11 @@
 
 #include <cmath>
 #include <cstring>
-#include <concepts>
 #include <functional>
 #include <iterator>
 #include <iostream>
 #include <memory>
-#include <span>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -58,13 +57,15 @@ namespace L2D {
     int w;
     int h;
 
-    friend auto operator*(Size lhs, auto rhs) {
+    template <typename T>
+    friend auto operator*(Size lhs, T rhs) {
       return Size
         { static_cast<int>(lhs.w * rhs)
         , static_cast<int>(lhs.h * rhs)
         };
     }
-    friend auto operator/(Size lhs, auto rhs) {
+    template <typename T>
+    friend auto operator/(Size lhs, T rhs) {
       return Size
         { static_cast<int>(lhs.w / rhs)
         , static_cast<int>(lhs.h / rhs)
@@ -112,7 +113,8 @@ namespace L2D {
       return Rect{left, top, right - left, bottom - top};
     }
 
-    friend auto lerp(Rect a, Rect b, auto t) {
+    template <typename T>
+    friend auto lerp(Rect a, Rect b, T t) {
       return Rect
         { static_cast<int>(std::lerp(a.x, b.x, t))
         , static_cast<int>(std::lerp(a.y, b.y, t))
@@ -131,7 +133,8 @@ namespace L2D {
 
       auto withAlpha(int alpha) const { return Colour{r, g, b, static_cast<uint8_t>(a * alpha / 255)}; }
 
-      friend auto lerp(Colour a, Colour b, auto t) {
+      template <typename T>
+      friend auto lerp(Colour a, Colour b, T t) {
         constexpr auto square = [](auto x) { return x * x; };
         return Colour
           { static_cast<uint8_t>(std::sqrt(std::lerp(square(a.r), square(b.r), t)))
@@ -200,7 +203,7 @@ namespace L2D {
 
   class Surface : public L2DWitness {
     private:
-      std::unique_ptr<SDL_Surface, lambdaFor<SDL_FreeSurface>> surface; 
+      std::unique_ptr<SDL_Surface, lambdaFor<SDL_FreeSurface>> surface;
 
       Surface(L2DWitness l2DWitness, SDL_Surface* rawSurface) : L2DWitness{l2DWitness}, surface{rawSurface} {}
 
@@ -262,7 +265,7 @@ namespace L2D {
 
   class Window {
     private:
-      SDL_Window* window; 
+      SDL_Window* window;
 
     public:
       Window(L2DWitness, std::string title, Rect rect, int flags)
@@ -300,7 +303,7 @@ namespace L2D {
 
   class Renderer {
     private:
-      std::unique_ptr<SDL_Renderer, lambdaFor<SDL_DestroyRenderer>> renderer; 
+      std::unique_ptr<SDL_Renderer, lambdaFor<SDL_DestroyRenderer>> renderer;
 
     public:
       Renderer() = delete;
@@ -384,7 +387,11 @@ namespace L2D {
         : rawRenderer{renderer.renderer.get()}
         , size{size}
         , texture{SDL_CreateTexture(rawRenderer, static_cast<SDL_PixelFormatEnum>(format), SDL_TEXTUREACCESS_STREAMING, size.w, size.h), SDL_DestroyTexture}
-        {}
+      {
+        if (!texture) {
+          std::cerr << SDL_GetError();
+        }
+      }
 
       void render(BlendMode blendMode) {
         if (0 != SDL_SetTextureBlendMode(texture.get(), blendMode.blendMode)) {
@@ -431,8 +438,147 @@ namespace L2D {
       }
   };
 
+  namespace Events {
+    inline auto poll() -> std::optional<SDL_Event> {
+      SDL_Event event;
+      if (SDL_PollEvent(&event)) {
+        return event;
+      } else {
+        return std::nullopt;
+      }
+    }
+
+    template <typename T, typename = void>
+    struct UserEvent {
+      public:
+        // These are set by SDL
+        Uint32 type;
+        Uint32 timestamp = 0;
+        Uint32 windowID = 0;
+
+        std::unique_ptr<T> data;
+
+        auto operator*() -> T& { return *data; }
+        auto operator*() const -> T const & { return *data; }
+
+        auto operator->() -> T* { return data.get(); }
+        auto operator->() const -> T const * { return data.get(); }
+
+      private:
+        template <typename ...Args>
+        UserEvent
+          ( Uint32 type
+          , Args&& ...args
+          )
+          : type{type}
+          , data{std::make_unique<T>(std::forward<Args>(args)...)}
+          {}
+
+        template <typename> friend class UserEventType;
+    };
+    static_assert(sizeof(UserEvent<std::array<int, 100>>) <= sizeof(SDL_Event), "UserEvent of large T does not fit in the SDL_Event union");
+
+    template <typename T>
+    struct UserEventSBO {
+      public:
+        // These are set by SDL
+        Uint32 type;
+        Uint32 timestamp = 0;
+        Uint32 windowID = 0;
+
+        T data;
+
+        auto operator*() -> T& { return data; }
+        auto operator*() const -> T const & { return data; }
+
+        auto operator->() -> T* { return &data; }
+        auto operator->() const -> T const * { return &data; }
+
+      protected:
+        template <typename ...Args>
+        UserEventSBO
+          ( Uint32 type
+          , Args&& ...args
+          )
+          : type{type}
+          , data{std::forward<Args>(args)...}
+          {}
+    };
+
+    template <typename T>
+    constexpr auto is_trivially_relocatable =
+      [] {
+        return std::is_trivially_copyable_v<T>;
+      }();
+
+    template <typename T>
+    constexpr auto is_trivially_relocatable<std::unique_ptr<T>> = true;
+
+    template <typename T>
+    constexpr auto is_trivially_relocatable<std::basic_string<T>> = true;
+
+    template <typename T>
+    struct UserEvent
+      < T
+      , std::enable_if_t
+        <  sizeof(UserEventSBO<T>) <= sizeof(SDL_Event)
+        && is_trivially_relocatable<T>
+        >
+      >
+      : public UserEventSBO<T>
+      {
+      private:
+        template <typename ...Args>
+        UserEvent
+          ( Uint32 type
+          , Args&& ...args
+          )
+          : UserEventSBO<T>
+            { type
+            , std::forward<Args>(args)...
+            }
+          {}
+
+        template <typename> friend class UserEventType;
+    };
+    static_assert(sizeof(UserEvent<int>) <= sizeof(SDL_Event), "UserEvent of small T does not fit in the SDL_Event union");
+
+    template <typename T>
+    class UserEventType {
+      private:
+        Uint32 const type;
+
+        struct UserEventDestructor {
+          void operator()(UserEvent<T>* e) const noexcept { e->~UserEvent<T>(); };
+        };
+        using EventPtr = std::unique_ptr<UserEvent<T>, UserEventDestructor>;
+
+      public:
+        UserEventType(L2DWitness) : type{SDL_RegisterEvents(1)} {}
+
+        template <typename ...Args>
+        void push(Args&& ...args) {
+          SDL_Event event;
+          new(event.padding) UserEvent<T>(type, std::forward<Args>(args)...);
+          SDL_PushEvent(&event);
+        }
+
+        auto parse(SDL_Event& event) -> EventPtr {
+          if (event.type == type) {
+            return EventPtr{reinterpret_cast<UserEvent<T>*>(event.padding)};
+          } else {
+            return nullptr;
+          }
+        }
+    };
+  };
+
   void delay(uint32_t milliseconds) {
     SDL_Delay(milliseconds);
+  }
+
+  void show_cursor(bool show) {
+    SDL_ShowCursor(show);
   }
 };
 

@@ -50,8 +50,8 @@ namespace KeyFill {
       }
 
       auto render(L2D::Surface& surface) {
-        auto texture = L2D::Texture{renderer, surface};
-        texture.render
+        auto texture2 = L2D::Texture{renderer, surface};
+        texture2.render
           ( {0, 0, 1920, 1080}
           , L2D::BlendMode::Custom
             //( SDL_BLENDFACTOR_SRC_ALPHA
@@ -64,7 +64,7 @@ namespace KeyFill {
             )
           );
         renderer.fill({1920, 0, 1920, 1080}, {255, 255, 255, 255});
-        texture.render
+        texture2.render
           ( {1920, 0, 1920, 1080}
           , L2D::BlendMode::Custom
             ( SDL_BLENDFACTOR_ZERO

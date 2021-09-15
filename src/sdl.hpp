@@ -3,5 +3,4 @@
 #define SDL_DISABLE_XMMINTRIN_H
 #define SDL_DISABLE_EMMINTRIN_H
 
-#include <SDL2/SDL.h>
-
+#include <SDL.h>

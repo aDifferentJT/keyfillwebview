@@ -9,7 +9,15 @@
 # cefsimple sources.
 set(CEFSIMPLE_SRCS
   main.cpp
+  KeyFill.hpp
+  Light2D.hpp
+  sdl.hpp
   )
+set(CEFSIMPLE_SRCS_WINDOWS
+  keyfillwebview.rc
+  resource.h
+  )
+APPEND_PLATFORM_SOURCES(CEFSIMPLE_SRCS)
 source_group(cefsimple FILES ${CEFSIMPLE_SRCS})
 
 set(CEFSIMPLE_SRCS
@@ -28,6 +36,11 @@ ADD_LOGICAL_TARGET("libcef_lib" "${CEF_LIB_DEBUG}" "${CEF_LIB_RELEASE}")
 # Determine the target output directory.
 SET_CEF_TARGET_OUT_DIR()
 
+find_package(Boost
+  1.66
+  REQUIRED
+  )
+include_directories(${Boost_INCLUDE_DIRS})
 
 #
 # Linux configuration.
@@ -175,6 +188,12 @@ if(OS_WINDOWS)
   SET_EXECUTABLE_TARGET_PROPERTIES(${CEF_TARGET})
   target_link_libraries(${CEF_TARGET} libcef_lib libcef_dll_wrapper ${CEF_STANDARD_LIBS})
 
+  include_directories("C:/Users/JT/SDL2/include")
+
+  find_library(SDL2_LIB SDL2 HINTS "C:/Users/JT/SDL2/lib/x64")
+  find_file(SDL2_DLL SDL2.dll HINTS "C:/Users/JT/SDL2/lib/x64")
+  target_link_libraries(${CEF_TARGET} ${SDL2_LIB})
+
   if(USE_SANDBOX)
     # Logical target used to link the cef_sandbox library.
     ADD_LOGICAL_TARGET("cef_sandbox_lib" "${CEF_SANDBOX_LIB_DEBUG}" "${CEF_SANDBOX_LIB_RELEASE}")
@@ -187,4 +206,11 @@ if(OS_WINDOWS)
   # Copy binary and resource files to the target output directory.
   COPY_FILES("${CEF_TARGET}" "${CEF_BINARY_FILES}" "${CEF_BINARY_DIR}" "${CEF_TARGET_OUT_DIR}")
   COPY_FILES("${CEF_TARGET}" "${CEF_RESOURCE_FILES}" "${CEF_RESOURCE_DIR}" "${CEF_TARGET_OUT_DIR}")
+
+  add_custom_command(
+    TARGET ${CEF_TARGET}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL2_DLL}" "${CEF_TARGET_OUT_DIR}/SDL2.dll"
+    VERBATIM
+    )
 endif()

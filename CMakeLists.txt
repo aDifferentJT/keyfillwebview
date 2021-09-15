@@ -134,7 +134,7 @@
 
 cmake_minimum_required(VERSION 2.8.12.1)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
 # Only generate Debug and Release configuration types.
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
@@ -176,7 +176,13 @@ set_property(GLOBAL PROPERTY OS_FOLDERS ON)
 #    files as an example.
 # D. Comment in these lines:
 #
-set(CEF_ROOT "/opt/cef")
+if(OS_LINUX)
+  set(CEF_ROOT "/opt/cef")
+endif()
+if(WIN32)
+  set(CEF_ROOT "C:/Users/JT/cef")
+endif()
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CEF_ROOT}/cmake")
 
 # Example 3: The binary distribution is in a separate directory from your
