@@ -17,6 +17,11 @@
 
 #include "sdl.hpp"
 
+template <typename T, typename U>
+auto lerp(T a, T b, U t) {
+  return t < 0.5 ? a + t * (b - a) : b + (1 - t) * (a - b);
+}
+
 namespace L2D {
 
   class L2DWitness {
@@ -116,10 +121,10 @@ namespace L2D {
     template <typename T>
     friend auto lerp(Rect a, Rect b, T t) {
       return Rect
-        { static_cast<int>(std::lerp(a.x, b.x, t))
-        , static_cast<int>(std::lerp(a.y, b.y, t))
-        , static_cast<int>(std::lerp(a.w, b.w, t))
-        , static_cast<int>(std::lerp(a.h, b.h, t))
+        { static_cast<int>(lerp(a.x, b.x, t))
+        , static_cast<int>(lerp(a.y, b.y, t))
+        , static_cast<int>(lerp(a.w, b.w, t))
+        , static_cast<int>(lerp(a.h, b.h, t))
         };
     }
   };
@@ -137,10 +142,10 @@ namespace L2D {
       friend auto lerp(Colour a, Colour b, T t) {
         constexpr auto square = [](auto x) { return x * x; };
         return Colour
-          { static_cast<uint8_t>(std::sqrt(std::lerp(square(a.r), square(b.r), t)))
-          , static_cast<uint8_t>(std::sqrt(std::lerp(square(a.g), square(b.g), t)))
-          , static_cast<uint8_t>(std::sqrt(std::lerp(square(a.b), square(b.b), t)))
-          , static_cast<uint8_t>(std::sqrt(std::lerp(square(a.a), square(b.a), t)))
+          { static_cast<uint8_t>(std::sqrt(lerp(square(a.r), square(b.r), t)))
+          , static_cast<uint8_t>(std::sqrt(lerp(square(a.g), square(b.g), t)))
+          , static_cast<uint8_t>(std::sqrt(lerp(square(a.b), square(b.b), t)))
+          , static_cast<uint8_t>(std::sqrt(lerp(square(a.a), square(b.a), t)))
           };
       }
 
