@@ -16,10 +16,35 @@ jobs:
     # well on Windows or Mac.  You can convert this to a matrix build if you need
     # cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-latest
-
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
     - uses: actions/checkout@v2
+
+    - name: Download CEF (Linux)
+      if: runner.os == "Linux"
+      uses: wei/wget@v1
+      with:
+        args: -O cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_linux64_minimal.tar.bz2
+
+    - name: Download CEF (macOS)
+      if: runner.os == "macOS"
+      uses: wei/wget@v1
+      with:
+        args: -O cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_macosx64_minimal.tar.bz2
+
+    - name: Download CEF (Windows)
+      if: runner.os == "Windows"
+      uses: wei/wget@v1
+      with:
+        args: -O cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_windows64_minimal.tar.bz2
+
+    - name: Extract CEF
+      run:
+        tar -xf cef.tar.bz2
+        set CEF_ROOT=${PWD}/cef
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
