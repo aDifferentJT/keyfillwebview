@@ -38,10 +38,10 @@ jobs:
 
     - name: Extract CEF
       run: |
-        tar -xf cef.tar.bz2
-        set CEF_ROOT=${PWD}/cef
+        mkdir cef
+        tar xf cef.tar.bz2 -C cef --strip-components 1
         echo "CEF_ROOT=${PWD}/cef" >> $GITHUB_ENV
-        ls
+        ls cef/
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
