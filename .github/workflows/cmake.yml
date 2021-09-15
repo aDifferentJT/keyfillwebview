@@ -87,7 +87,7 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       
     - name: Show artifacts
-      run: ls src/Release/
+      run: ls ${{github.workspace}}/build/src/Release/
 
     - name: Test
       working-directory: ${{github.workspace}}/build
