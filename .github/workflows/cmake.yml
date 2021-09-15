@@ -40,7 +40,7 @@ jobs:
       run: |
         tar -xf cef.tar.bz2
         set CEF_ROOT=${PWD}/cef
-        echo "CEF_ROOT=$(${PWD}/cef)" >> $GITHUB_ENV
+        echo "CEF_ROOT=${PWD}/cef" >> $GITHUB_ENV
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
