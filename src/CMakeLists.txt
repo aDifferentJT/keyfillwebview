@@ -48,7 +48,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 if(OS_LINUX)
   add_compile_options(-fexceptions)
-  
+
   # Executable target.
   add_executable(${CEF_TARGET} ${CEFSIMPLE_SRCS})
   SET_EXECUTABLE_TARGET_PROPERTIES(${CEF_TARGET})
@@ -192,8 +192,14 @@ if(OS_WINDOWS)
 
   include_directories("C:/Users/JT/SDL2/include")
 
-  find_library(SDL2_LIB SDL2 HINTS "C:/Users/JT/SDL2/lib/x64")
-  find_file(SDL2_DLL SDL2.dll HINTS "C:/Users/JT/SDL2/lib/x64")
+  if(DEFINED $ENV{SDL2_ROOT})
+    set(SDL2_ROOT $ENV{SDL2_ROOT})
+  else
+    set(SDL2_ROOT $ENV{HOME}/SDL2)
+  endif
+
+  find_library(SDL2_LIB SDL2 HINTS "$SDL2_ROOT/lib/x64")
+  find_file(SDL2_DLL SDL2.dll HINTS "$SDL2_ROOT/lib/x64")
   target_link_libraries(${CEF_TARGET} ${SDL2_LIB})
 
   if(USE_SANDBOX)
