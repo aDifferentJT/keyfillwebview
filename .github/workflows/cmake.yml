@@ -48,7 +48,7 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         mkdir cef
-        7z x cef.tar.bz2 -ocef
+        7z x cef.tar.bz2 -so | 7z x -si -ttar -ocef
         echo "CEF_ROOT=${PWD}/cef" >> $GITHUB_ENV
         ls cef/
 
