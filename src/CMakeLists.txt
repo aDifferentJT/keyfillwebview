@@ -190,13 +190,13 @@ if(OS_WINDOWS)
   SET_EXECUTABLE_TARGET_PROPERTIES(${CEF_TARGET})
   target_link_libraries(${CEF_TARGET} libcef_lib libcef_dll_wrapper ${CEF_STANDARD_LIBS})
 
-  include_directories("C:/Users/JT/SDL2/include")
-
   if(DEFINED ENV{SDL2_ROOT})
     set(SDL2_ROOT $ENV{SDL2_ROOT})
   else()
     set(SDL2_ROOT $ENV{HOME}/SDL2)
   endif()
+
+  include_directories("${SDL2_ROOT}/include")
 
   find_library(SDL2_LIB SDL2 HINTS "${SDL2_ROOT}/lib/x64")
   find_file(SDL2_DLL SDL2.dll HINTS "${SDL2_ROOT}/lib/x64")
