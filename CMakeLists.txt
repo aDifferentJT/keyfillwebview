@@ -176,11 +176,13 @@ set_property(GLOBAL PROPERTY OS_FOLDERS ON)
 #    files as an example.
 # D. Comment in these lines:
 #
-if(OS_LINUX)
-  set(CEF_ROOT "/opt/cef")
-endif()
-if(WIN32)
-  set(CEF_ROOT "C:/Users/JT/cef")
+if(NOT DEFINED CEF_ROOT)
+  if(OS_LINUX)
+    set(CEF_ROOT "/opt/cef")
+  endif()
+  if(WIN32)
+    set(CEF_ROOT "C:/Users/JT/cef")
+  endif()
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CEF_ROOT}/cmake")
