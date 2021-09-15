@@ -25,19 +25,19 @@ jobs:
 
     - name: Download CEF (Linux)
       if: runner.os == 'Linux'
-      run: wget -O cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_linux64_minimal.tar.bz2
+      run: curl -o cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_linux64_minimal.tar.bz2
 
     - name: Download CEF (macOS)
       if: runner.os == 'macOS'
-      run: wget -O cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_macosx64_minimal.tar.bz2
+      run: curl -o cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_macosx64_minimal.tar.bz2
 
     - name: Download CEF (Windows)
       if: runner.os == 'Windows'
-      run: wget -O cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_windows64_minimal.tar.bz2
+      run: curl -o cef.tar.bz2 https://cef-builds.spotifycdn.com/cef_binary_93.1.11%2Bg9e254fa%2Bchromium-93.0.4577.63_windows64_minimal.tar.bz2
 
     - name: Extract CEF
       run:
-        tar -xf cef.tar.bz2
+        tar -xf cef.tar.bz2;
         set CEF_ROOT=${PWD}/cef
 
     - name: Configure CMake
