@@ -97,7 +97,7 @@ jobs:
       if: runner.os != 'macOS'
       run: |
         mkdir release
-        cp -r build/keyfillwebview build/src/Release
+        cp -r build/src/Release build/keyfillwebview
         zip -r release/keyfillwebview_${{runner.os}}.zip build/keyfillwebview
       
     - name: Get artifacts (macOS)
