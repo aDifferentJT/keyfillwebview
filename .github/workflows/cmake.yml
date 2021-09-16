@@ -97,7 +97,11 @@ jobs:
       if: runner.os != 'macOS'
       working-directory: ${{github.workspace}}/release
       run: |
-        cp ${{github.workspace}}/build/keyfillwebview ${{github.workspace}}/build/src/Release
+        ls ${{github.workspace}}
+        ls ${{github.workspace}}/build
+        ls ${{github.workspace}}/build/src
+        ls ${{github.workspace}}/build/src/Release
+        cp -r ${{github.workspace}}/build/keyfillwebview ${{github.workspace}}/build/src/Release
         zip -r keyfillwebview_${{runner.os}}.zip ${{github.workspace}}/build/keyfillwebview
       
     - name: Get artifacts (macOS)
