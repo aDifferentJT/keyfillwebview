@@ -106,8 +106,8 @@ jobs:
         mkdir release
         tar -cjf release/keyfillwebview_${{runner.os}}.tar.bz2 build/src/Release/keyfillwebview.app
       
-    - name: Get artifacts (Linux)
-      if: runner.os == 'Linux'
+    - name: Get artifacts (Windows)
+      if: runner.os == 'Windows'
       run: |
         mkdir release
         cp -r build/src/Release build/keyfillwebview
