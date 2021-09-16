@@ -108,7 +108,7 @@ jobs:
       run: ls
 
     - name: GH Release
-      if: contains(github.ref, "tag")
+      if: contains(github.ref, 'tag')
       uses: softprops/action-gh-release@v0.1.13
       with:
         # Newline-delimited list of path globs for asset files to upload
