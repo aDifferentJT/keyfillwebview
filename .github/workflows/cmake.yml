@@ -94,14 +94,17 @@ jobs:
       run: ctest -C ${{env.BUILD_TYPE}}
 
     - name: Get artifacts (non-macOS)
+      if: runner.os != 'macOS'
       working-directory: ${{github.workspace}}/release
       run: |
-        zip -r keyfillwebview_${{runner.os}} ${{github.workspace}}/build/src/Release/*
+        cp ${{github.workspace}}/build/keyfillwebview ${{github.workspace}}/build/src/Release
+        zip -r keyfillwebview_${{runner.os}}.zip ${{github.workspace}}/build/keyfillwebview
       
     - name: Get artifacts (macOS)
+      if: runner.os == 'macOS'
       working-directory: ${{github.workspace}}/release
       run: |
-        zip -r keyfillwebview_${{runner.os}} ${{github.workspace}}/build/src/Release/keyfillwebview.app
+        zip -r keyfillwebview_${{runner.os}}.zip ${{github.workspace}}/build/src/Release/keyfillwebview.app
       
     - name: Show release
       working-directory: ${{github.workspace}}/release
