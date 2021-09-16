@@ -95,20 +95,16 @@ jobs:
 
     - name: Get artifacts (non-macOS)
       if: runner.os != 'macOS'
-      working-directory: ${{github.workspace}}/release
       run: |
-        ls ${{github.workspace}}
-        ls ${{github.workspace}}/build
-        ls ${{github.workspace}}/build/src
-        ls ${{github.workspace}}/build/src/Release
-        cp -r ${{github.workspace}}/build/keyfillwebview ${{github.workspace}}/build/src/Release
-        zip -r keyfillwebview_${{runner.os}}.zip ${{github.workspace}}/build/keyfillwebview
+        mkdir release
+        cp -r build/keyfillwebview build/src/Release
+        zip -r release/keyfillwebview_${{runner.os}}.zip build/keyfillwebview
       
     - name: Get artifacts (macOS)
       if: runner.os == 'macOS'
-      working-directory: ${{github.workspace}}/release
       run: |
-        zip -r keyfillwebview_${{runner.os}}.zip ${{github.workspace}}/build/src/Release/keyfillwebview.app
+        mkdir release
+        zip -r release/keyfillwebview_${{runner.os}}.zip build/src/Release/keyfillwebview.app
       
     - name: Show release
       working-directory: ${{github.workspace}}/release
