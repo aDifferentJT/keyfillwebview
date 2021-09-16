@@ -98,13 +98,13 @@ jobs:
       run: |
         mkdir release
         cp -r build/src/Release build/keyfillwebview
-        zip -r release/keyfillwebview_${{runner.os}}.zip build/keyfillwebview
+        tar -cjf release/keyfillwebview_${{runner.os}}.tar.bz2 build/keyfillwebview
       
     - name: Get artifacts (macOS)
       if: runner.os == 'macOS'
       run: |
         mkdir release
-        zip -r release/keyfillwebview_${{runner.os}}.zip build/src/Release/keyfillwebview.app
+        tar -cjf release/keyfillwebview_${{runner.os}}.zip build/src/Release/keyfillwebview.app
       
     - name: Show release
       working-directory: ${{github.workspace}}/release
