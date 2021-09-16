@@ -5,7 +5,6 @@
 #define BOOST_BEAST_USE_STD_STRING_VIEW
 
 #include <boost/asio.hpp>
-#include <boost/assert/source_location.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 
@@ -21,10 +20,12 @@ namespace boost {
     std::terminate();
   }
 
+#if (BOOST_VERSION >= 017300)
   void throw_exception(std::exception const & e, boost::source_location const & loc) {
     std::cerr << e.what() << "at " << loc;
     std::terminate();
   }
+#endif
 }
 
 template <typename HTTPHandler>
