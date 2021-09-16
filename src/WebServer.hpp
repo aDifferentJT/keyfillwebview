@@ -5,7 +5,7 @@
 #define BOOST_BEAST_USE_STD_STRING_VIEW
 
 #include <boost/asio.hpp>
-#include <boost/assert.hpp>
+#include <boost/assert/source_location.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 
