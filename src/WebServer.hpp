@@ -199,7 +199,7 @@ class WebServer {
                         } else {
                           httpHandler
                             ( HTTP::Request{parser->release()}
-                            , [this, stream, buffer, parser] (HTTP::Response res) {
+                            , [stream, buffer, parser] (HTTP::Response res) {
                                 auto beastRes = std::make_shared<http::response<http::string_body>>(res.beastResponse());
                                 http::async_write
                                   ( *stream

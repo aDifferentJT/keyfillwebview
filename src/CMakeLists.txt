@@ -24,14 +24,48 @@ set(CEFSIMPLE_SRCS
   ${CEFSIMPLE_SRCS}
   )
 
+# cefsimple helper sources.
+set(CEFSIMPLE_HELPER_SRCS_MAC
+  process_helper_mac.cpp
+  )
+APPEND_PLATFORM_SOURCES(CEFSIMPLE_HELPER_SRCS)
+source_group(cefsimple FILES ${CEFSIMPLE_HELPER_SRCS})
+
+# cefsimple resources.
+set(CEFSIMPLE_RESOURCES_MAC_SRCS_MAC
+  mac/Info.plist
+  mac/cefsimple.icns
+  )
+APPEND_PLATFORM_SOURCES(CEFSIMPLE_RESOURCES_MAC_SRCS)
+source_group(cefsimple\\\\mac FILES ${CEFSIMPLE_RESOURCES_MAC_SRCS})
+
+set(CEFSIMPLE_RESOURCES_MAC_ENGLISH_LPROJ_SRCS_MAC
+  mac/English.lproj/InfoPlist.strings
+  mac/English.lproj/MainMenu.xib
+  )
+APPEND_PLATFORM_SOURCES(CEFSIMPLE_RESOURCES_MAC_ENGLISH_LPROJ_SRCS)
+source_group(cefsimple\\\\mac\\\\English.lproj FILES ${CEFSIMPLE_RESOURCES_MAC_ENGLISH_LPROJ_SRCS})
+
+set(CEFSIMPLE_RESOURCES_SRCS
+  ${CEFSIMPLE_RESOURCES_MAC_SRCS}
+  ${CEFSIMPLE_RESOURCES_MAC_ENGLISH_LPROJ_SRCS}
+  )
+
 #
 # Shared configuration.
 #
 
+list(APPEND CEF_CXX_COMPILER_FLAGS -fexceptions)
+
 # Target executable names.
 set(CEF_TARGET "keyfillwebview")
-# Logical target used to link the libcef library.
-ADD_LOGICAL_TARGET("libcef_lib" "${CEF_LIB_DEBUG}" "${CEF_LIB_RELEASE}")
+if(OS_MAC)
+  set(CEF_HELPER_TARGET "cefsimple_Helper")
+  set(CEF_HELPER_OUTPUT_NAME "cefsimple Helper")
+else()
+  # Logical target used to link the libcef library.
+  ADD_LOGICAL_TARGET("libcef_lib" "${CEF_LIB_DEBUG}" "${CEF_LIB_RELEASE}")
+endif()
 
 # Determine the target output directory.
 SET_CEF_TARGET_OUT_DIR()
@@ -47,8 +81,6 @@ include_directories(${Boost_INCLUDE_DIRS})
 #
 
 if(OS_LINUX)
-  add_compile_options(-fexceptions)
-
   # Executable target.
   add_executable(${CEF_TARGET} ${CEFSIMPLE_SRCS})
   SET_EXECUTABLE_TARGET_PROPERTIES(${CEF_TARGET})
@@ -88,6 +120,12 @@ if(OS_MAC)
       )
   endif()
 
+  set(CMAKE_OSX_DEPLOYMENT_TARGET 11)
+
+  list(APPEND CEF_COMPILER_FLAGS -Wno-newline-eof)
+
+  link_directories("/usr/local/lib")
+
   # Output path for the main app bundle.
   set(CEF_APP "${CEF_TARGET_OUT_DIR}/${CEF_TARGET}.app")
 
@@ -105,6 +143,7 @@ if(OS_MAC)
   SET_EXECUTABLE_TARGET_PROPERTIES(${CEF_TARGET})
   add_dependencies(${CEF_TARGET} libcef_dll_wrapper)
   target_link_libraries(${CEF_TARGET} libcef_dll_wrapper ${CEF_STANDARD_LIBS})
+  target_link_libraries(${CEF_TARGET} SDL2)
   set_target_properties(${CEF_TARGET} PROPERTIES
     MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/mac/Info.plist
     )

@@ -264,8 +264,6 @@ class Client : public CefClient, CefLifeSpanHandler, CefRenderHandler {
 
   private:
     CefRefPtr<CefBrowser>& _browser;
-    L2D::L2DWitness l2DWitness;
-    KeyFill::Windows& keyFill;
     L2D::Events::UserEventType<KeyFillEvent>& keyFillEvent;
 
     std::condition_variable cv;
@@ -274,13 +272,9 @@ class Client : public CefClient, CefLifeSpanHandler, CefRenderHandler {
   public:
     Client
       ( CefRefPtr<CefBrowser>& browser
-      , L2D::L2DWitness l2DWitness
-      , KeyFill::Windows& keyFill
       , L2D::Events::UserEventType<KeyFillEvent>& keyFillEvent
       )
       : _browser{browser}
-      , l2DWitness{l2DWitness}
-      , keyFill{keyFill}
       , keyFillEvent{keyFillEvent}
       {}
 
@@ -339,8 +333,6 @@ class App : public CefApp, CefBrowserProcessHandler {
     CefRefPtr<CefBrowser>& _browser;
 
   public:
-    L2D::L2DWitness* l2DWitness;
-    KeyFill::Windows* keyFill;
     L2D::Events::UserEventType<KeyFillEvent>* keyFillEvent;
 
     App(CefRefPtr<CefBrowser>& browser) : _browser{browser} {}
@@ -361,8 +353,6 @@ class App : public CefApp, CefBrowserProcessHandler {
       auto client = CefRefPtr<Client>
         { new Client
           { _browser
-          , *l2DWitness
-          , *keyFill
           , *keyFillEvent
           }
         };
@@ -414,8 +404,6 @@ auto main(int argc, char** argv) -> int {
 
   auto keyFillEvent = L2D::Events::UserEventType<KeyFillEvent>{l2DInit};
 
-  app->l2DWitness = &l2DInit;
-  app->keyFill = &keyFill;
   app->keyFillEvent = &keyFillEvent;
 
   auto settings = CefSettings{};

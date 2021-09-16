@@ -382,7 +382,6 @@ namespace L2D {
   class StreamingTexture {
     private:
       SDL_Renderer* rawRenderer;
-      Size size;
       std::unique_ptr<SDL_Texture, void(*)(SDL_Texture* t)> texture;
 
     public:
@@ -390,7 +389,6 @@ namespace L2D {
 
       StreamingTexture(Renderer& renderer, Surface::Format format, Size size)
         : rawRenderer{renderer.renderer.get()}
-        , size{size}
         , texture{SDL_CreateTexture(rawRenderer, static_cast<SDL_PixelFormatEnum>(format), SDL_TEXTUREACCESS_STREAMING, size.w, size.h), SDL_DestroyTexture}
       {
         if (!texture) {
