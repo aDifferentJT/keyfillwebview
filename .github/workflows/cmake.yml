@@ -109,9 +109,8 @@ jobs:
 
     - name: GH Release
       if: contains(github.ref, "tag")
-      working-directory: ${{github.workspace}}/release
-      uses: softprops/action-gh-release
+      uses: softprops/action-gh-release@v0.1.13
       with:
         # Newline-delimited list of path globs for asset files to upload
-        files: "*"
+        files: ${{github.workspace}}/release/*
         
