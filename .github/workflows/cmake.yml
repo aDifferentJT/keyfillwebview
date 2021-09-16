@@ -87,12 +87,30 @@ jobs:
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       
-    - name: Show artifacts
-      run: ls ${{github.workspace}}/build/src/Release/
-
     - name: Test
       working-directory: ${{github.workspace}}/build
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C ${{env.BUILD_TYPE}}
+
+    - name: Get artifacts (non-macOS)
+      working-directory: ${{github.workspace}}/release
+      run: |
+        zip -r keyfillwebview_${{runner.os}} ${{github.workspace}}/build/src/Release/*
       
+    - name: Get artifacts (macOS)
+      working-directory: ${{github.workspace}}/release
+      run: |
+        zip -r keyfillwebview_${{runner.os}} ${{github.workspace}}/build/src/Release/keyfillwebview.app
+      
+    - name: Show release
+      working-directory: ${{github.workspace}}/release
+      run: ls
+
+    - name: GH Release
+      if: contains(github.ref, "tag")
+      working-directory: ${{github.workspace}}/release
+      with:
+        # Newline-delimited list of path globs for asset files to upload
+        files: "*"
+        
