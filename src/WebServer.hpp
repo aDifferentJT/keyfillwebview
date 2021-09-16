@@ -20,7 +20,7 @@ namespace boost {
     std::terminate();
   }
 
-#if (BOOST_VERSION >= 017300)
+#if (BOOST_VERSION >= 107300)
   void throw_exception(std::exception const & e, boost::source_location const & loc) {
     std::cerr << e.what() << "at " << loc;
     std::terminate();
