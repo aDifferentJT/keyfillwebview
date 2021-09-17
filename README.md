@@ -3,7 +3,7 @@
 keyfillwebview renders any web page in key/fill for use with a hardware switcher.
 
 Binary releases should be available in [Releases](https://github.com/nixCodeX/keyfillwebview/releases).
-There are versions for Linux, macOS and Windows but the macOS version currently doesn't work.
+There are versions for Linux and Windows.
 
 ## Operation
 
