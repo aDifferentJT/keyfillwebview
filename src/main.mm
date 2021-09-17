@@ -1,1 +1,1 @@
-../src/main.cpp
+main.cpp
