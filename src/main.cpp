@@ -18,6 +18,11 @@
 #include <iostream>
 #include <sstream>
 
+#ifdef __APPLE__
+#import <Cocoa/Cocoa.h>
+#include "include/cef_application_mac.h"
+#endif
+
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -265,7 +270,7 @@ class Client : public CefClient, CefLifeSpanHandler, CefRenderHandler {
 
   private:
     CefRefPtr<CefBrowser>& _browser;
-    L2D::Events::UserEventType<KeyFillEvent>& keyFillEvent;
+    std::optional<KeyFill::Windows>& keyFill;
 
     std::condition_variable cv;
     std::mutex mutex;
@@ -273,10 +278,10 @@ class Client : public CefClient, CefLifeSpanHandler, CefRenderHandler {
   public:
     Client
       ( CefRefPtr<CefBrowser>& browser
-      , L2D::Events::UserEventType<KeyFillEvent>& keyFillEvent
+      , std::optional<KeyFill::Windows>& keyFill
       )
       : _browser{browser}
-      , keyFillEvent{keyFillEvent}
+      , keyFill{keyFill}
       {}
 
     // CefClient methods
@@ -312,17 +317,21 @@ class Client : public CefClient, CefLifeSpanHandler, CefRenderHandler {
       keyFill.render(surface);
 */
 
-/*
-      {
-        auto dst = keyFill.lock();
-        std::memcpy(dst.pixels.get(), buffer, dst.pitch * 1080);
+      if (keyFill) {
+        {
+          auto dst = keyFill->lock();
+          std::memcpy(dst.pixels.get(), buffer, dst.pitch * 1080);
+        }
+        keyFill->render();
       }
-      keyFill.render();
-*/
 
-      auto lock = std::unique_lock{mutex};
-      keyFillEvent.push(buffer, cv);
-      cv.wait(lock);
+/*
+      if (keyFillEvent) {
+        auto lock = std::unique_lock{mutex};
+        keyFillEvent->push(buffer, cv);
+        cv.wait(lock);
+      }
+*/
     }
 };
 
@@ -332,11 +341,16 @@ class App : public CefApp, CefBrowserProcessHandler {
 
   private:
     CefRefPtr<CefBrowser>& _browser;
+    std::optional<KeyFill::Windows>& keyFill;
 
   public:
-    L2D::Events::UserEventType<KeyFillEvent>* keyFillEvent;
-
-    App(CefRefPtr<CefBrowser>& browser) : _browser{browser} {}
+    App
+      ( CefRefPtr<CefBrowser>& browser
+      , std::optional<KeyFill::Windows>& keyFill
+      )
+      : _browser{browser}
+      , keyFill{keyFill}
+      {}
 
     // CefApp methods
     auto GetBrowserProcessHandler() -> CefRefPtr<CefBrowserProcessHandler> override { return this; }
@@ -351,12 +365,7 @@ class App : public CefApp, CefBrowserProcessHandler {
 
       settings.windowless_frame_rate = 25;
 
-      auto client = CefRefPtr<Client>
-        { new Client
-          { _browser
-          , *keyFillEvent
-          }
-        };
+      auto client = CefRefPtr<Client>{new Client{_browser, keyFill}};
 
 #ifdef WIN32
       info.SetAsPopup(nullptr, "Web View");
@@ -365,6 +374,75 @@ class App : public CefApp, CefBrowserProcessHandler {
       CefBrowserHost::CreateBrowser(info, client, "http://127.0.0.1:8080/instructions", settings, nullptr, nullptr);
     }
 };
+
+#ifdef __APPLE__
+// Provide the CefAppProtocol implementation required by CEF.
+@interface Application : NSApplication <CefAppProtocol> {
+ @private
+  BOOL handlingSendEvent_;
+}
+@end
+
+@implementation Application
+- (BOOL)isHandlingSendEvent {
+  return handlingSendEvent_;
+}
+
+- (void)setHandlingSendEvent:(BOOL)handlingSendEvent {
+  handlingSendEvent_ = handlingSendEvent;
+}
+
+- (void)sendEvent:(NSEvent*)event {
+  CefScopedSendingEvent sendingEventScoper;
+  [super sendEvent:event];
+}
+
+// |-terminate:| is the entry point for orderly "quit" operations in Cocoa. This
+// includes the application menu's quit menu item and keyboard equivalent, the
+// application's dock icon menu's quit menu item, "quit" (not "force quit") in
+// the Activity Monitor, and quits triggered by user logout and system restart
+// and shutdown.
+//
+// The default |-terminate:| implementation ends the process by calling exit(),
+// and thus never leaves the main run loop. This is unsuitable for Chromium
+// since Chromium depends on leaving the main run loop to perform an orderly
+// shutdown. We support the normal |-terminate:| interface by overriding the
+// default implementation. Our implementation, which is very specific to the
+// needs of Chromium, works by asking the application delegate to terminate
+// using its |-tryToTerminateApplication:| method.
+//
+// |-tryToTerminateApplication:| differs from the standard
+// |-applicationShouldTerminate:| in that no special event loop is run in the
+// case that immediate termination is not possible (e.g., if dialog boxes
+// allowing the user to cancel have to be shown). Instead, this method tries to
+// close all browsers by calling CloseBrowser(false) via
+// ClientHandler::CloseAllBrowsers. Calling CloseBrowser will result in a call
+// to ClientHandler::DoClose and execution of |-performClose:| on the NSWindow.
+// DoClose sets a flag that is used to differentiate between new close events
+// (e.g., user clicked the window close button) and in-progress close events
+// (e.g., user approved the close window dialog). The NSWindowDelegate
+// |-windowShouldClose:| method checks this flag and either calls
+// CloseBrowser(false) in the case of a new close event or destructs the
+// NSWindow in the case of an in-progress close event.
+// ClientHandler::OnBeforeClose will be called after the CEF NSView hosted in
+// the NSWindow is dealloc'ed.
+//
+// After the final browser window has closed ClientHandler::OnBeforeClose will
+// begin actual tear-down of the application by calling CefQuitMessageLoop.
+// This ends the NSApplication event loop and execution then returns to the
+// main() function for cleanup before application termination.
+//
+// The standard |-applicationShouldTerminate:| is not supported, and code paths
+// leading to it must be redirected.
+- (void)terminate:(id)sender {
+  if (SDL_GetEventState(SDL_QUIT) == SDL_ENABLE) {
+    SDL_Event event;
+    event.type = SDL_QUIT;
+    SDL_PushEvent(&event);
+  }
+}
+@end
+#endif
 
 #ifdef WIN32
 int APIENTRY wWinMain(HINSTANCE hInstance,
@@ -387,9 +465,14 @@ auto main(int argc, char** argv) -> int {
   }
 #endif
 
-  auto browser = CefRefPtr<CefBrowser>{};
+#ifdef __APPLE__
+  [Application sharedApplication];
+#endif
 
-  auto app = CefRefPtr<App>{new App{browser}};
+  auto browser = CefRefPtr<CefBrowser>{};
+  auto keyFill = std::optional<KeyFill::Windows>{};
+
+  auto app = CefRefPtr<App>{new App{browser, keyFill}};
 
   if (auto exitCode = CefExecuteProcess(mainArgs, nullptr, nullptr); exitCode >= 0) {
     return exitCode;
@@ -402,29 +485,29 @@ auto main(int argc, char** argv) -> int {
   auto server = WebServer<HTTPHandler>{HTTPHandler{browser}, boost::asio::ip::tcp::endpoint{address, port}, noThreads};
 
   auto l2DInit = L2D::L2DInit{};
-  auto keyFill = KeyFill::Windows
-    { l2DInit
+
+  keyFill.emplace
+    ( l2DInit
     , "Web View"
-    , {0, 0, 3840, 1080}
+    , L2D::Rect{0, 0, 3840, 1080}
     , SDL_WINDOW_BORDERLESS
-    };
+    );
 
   L2D::show_cursor(false);
 
-  auto keyFillEvent = L2D::Events::UserEventType<KeyFillEvent>{l2DInit};
-
-  app->keyFillEvent = &keyFillEvent;
-
   auto settings = CefSettings{};
 
-  settings.multi_threaded_message_loop = true;
   settings.windowless_rendering_enabled = true;
 
   CefInitialize(mainArgs, settings, app, nullptr);
 
+#ifdef __APPLE__
+  [[NSBundle mainBundle] loadNibNamed:@"MainMenu" owner:NSApp topLevelObjects:nil];
+#endif
+
   auto running = true;
   while(running) {
-    if (auto event = L2D::Events::poll()) {
+    while (auto event = L2D::Events::poll()) {
       switch (event->type) {
         case SDL_QUIT:
           running = false;
@@ -439,19 +522,14 @@ auto main(int argc, char** argv) -> int {
           }
           break;
         default:
-          if (auto bufferAndCv = keyFillEvent.parse(*event)) {
-            {
-              auto& [buffer, cv] = **bufferAndCv;
-              auto dst = keyFill.lock();
-              std::memcpy(dst.pixels.get(), buffer, dst.pitch * 1080);
-              cv.notify_one();
-            }
-            keyFill.render();
-          }
           break;
       }
     }
+    CefDoMessageLoopWork();
+    // Should use CefSettings.external_message_pump option and CefBrowserProcessHandler::OnScheduleMessagePumpWork()
   }
+
+  browser = nullptr;
 
   CefShutdown();
 
