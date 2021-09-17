@@ -2,6 +2,7 @@
 #include "include/base/cef_logging.h"
 #include "include/cef_app.h"
 #include "include/cef_command_line.h"
+#include "include/wrapper/cef_library_loader.h"
 
 #include "KeyFill.hpp"
 #include "Light2D.hpp"
@@ -378,6 +379,14 @@ auto main(int argc, char** argv) -> int {
   auto mainArgs = CefMainArgs{argc, argv};
 #endif
 
+#ifdef __APPLE__
+  auto library_loader = CefScopedLibraryLoader{};
+  if (!library_loader.LoadInMain()) {
+    std::cerr << "Cannot load shared library\n";
+    return EXIT_FAILURE;
+  }
+#endif
+
   auto browser = CefRefPtr<CefBrowser>{};
 
   auto app = CefRefPtr<App>{new App{browser}};
@@ -412,8 +421,6 @@ auto main(int argc, char** argv) -> int {
   settings.windowless_rendering_enabled = true;
 
   CefInitialize(mainArgs, settings, app, nullptr);
-
-  //CefRunMessageLoop();
 
   auto running = true;
   while(running) {

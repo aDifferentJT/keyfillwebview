@@ -8,17 +8,23 @@
 
 # cefsimple sources.
 set(CEFSIMPLE_SRCS
-  main.cpp
   KeyFill.hpp
   Light2D.hpp
   sdl.hpp
   )
+set(CEFSIMPLE_SRCS_LINUX
+  main.cpp
+  )
+set(CEFSIMPLE_SRCS_MAC
+  main.mm
+  )
 set(CEFSIMPLE_SRCS_WINDOWS
   keyfillwebview.rc
+  main.cpp
   resource.h
   )
 APPEND_PLATFORM_SOURCES(CEFSIMPLE_SRCS)
-source_group(cefsimple FILES ${CEFSIMPLE_SRCS})
+source_group(keyfillwebview FILES ${CEFSIMPLE_SRCS})
 
 set(CEFSIMPLE_SRCS
   ${CEFSIMPLE_SRCS}
@@ -29,7 +35,7 @@ set(CEFSIMPLE_HELPER_SRCS_MAC
   process_helper_mac.cpp
   )
 APPEND_PLATFORM_SOURCES(CEFSIMPLE_HELPER_SRCS)
-source_group(cefsimple FILES ${CEFSIMPLE_HELPER_SRCS})
+source_group(keyfillwebview FILES ${CEFSIMPLE_HELPER_SRCS})
 
 # cefsimple resources.
 set(CEFSIMPLE_RESOURCES_MAC_SRCS_MAC
@@ -37,14 +43,14 @@ set(CEFSIMPLE_RESOURCES_MAC_SRCS_MAC
   mac/cefsimple.icns
   )
 APPEND_PLATFORM_SOURCES(CEFSIMPLE_RESOURCES_MAC_SRCS)
-source_group(cefsimple\\\\mac FILES ${CEFSIMPLE_RESOURCES_MAC_SRCS})
+source_group(keyfillwebview\\\\mac FILES ${CEFSIMPLE_RESOURCES_MAC_SRCS})
 
 set(CEFSIMPLE_RESOURCES_MAC_ENGLISH_LPROJ_SRCS_MAC
   mac/English.lproj/InfoPlist.strings
   mac/English.lproj/MainMenu.xib
   )
 APPEND_PLATFORM_SOURCES(CEFSIMPLE_RESOURCES_MAC_ENGLISH_LPROJ_SRCS)
-source_group(cefsimple\\\\mac\\\\English.lproj FILES ${CEFSIMPLE_RESOURCES_MAC_ENGLISH_LPROJ_SRCS})
+source_group(keyfillwebview\\\\mac\\\\English.lproj FILES ${CEFSIMPLE_RESOURCES_MAC_ENGLISH_LPROJ_SRCS})
 
 set(CEFSIMPLE_RESOURCES_SRCS
   ${CEFSIMPLE_RESOURCES_MAC_SRCS}
@@ -60,8 +66,8 @@ list(APPEND CEF_CXX_COMPILER_FLAGS -fexceptions)
 # Target executable names.
 set(CEF_TARGET "keyfillwebview")
 if(OS_MAC)
-  set(CEF_HELPER_TARGET "cefsimple_Helper")
-  set(CEF_HELPER_OUTPUT_NAME "cefsimple Helper")
+  set(CEF_HELPER_TARGET "keyfillwebview_Helper")
+  set(CEF_HELPER_OUTPUT_NAME "keyfillwebview Helper")
 else()
   # Logical target used to link the libcef library.
   ADD_LOGICAL_TARGET("libcef_lib" "${CEF_LIB_DEBUG}" "${CEF_LIB_RELEASE}")
@@ -122,7 +128,7 @@ if(OS_MAC)
 
   set(CMAKE_OSX_DEPLOYMENT_TARGET 11)
 
-  list(APPEND CEF_COMPILER_FLAGS -Wno-newline-eof)
+  list(APPEND CEF_COMPILER_FLAGS -Wno-deprecated-declarations -Wno-newline-eof)
 
   link_directories("/usr/local/lib")
 
