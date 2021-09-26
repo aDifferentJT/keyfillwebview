@@ -377,18 +377,18 @@ struct HTTPHandler {
       auto index_html = std::stringstream{};
       index_html << index_html1;
 
-      auto ec = std::error_code{};
-      if (std::filesystem::is_directory(video_dir, ec)) {
-        auto ec = std::error_code{};
+      auto ec1 = std::error_code{};
+      if (std::filesystem::is_directory(video_dir, ec1)) {
+        auto ec2 = std::error_code{};
         std::transform
-          ( std::filesystem::directory_iterator{video_dir, ec}
+          ( std::filesystem::directory_iterator{video_dir, ec2}
           , std::filesystem::directory_iterator{}
           , std::ostream_iterator<std::string>{index_html}
           , [] (std::filesystem::directory_entry video) {
               return fmt::format("<option value=\"{0}\">{0}</option>", video.path().filename().string());
             }
           );
-        if (ec) {
+        if (ec2) {
           return callback(HTTP::Response{req, HTTP::Response::Status::InternalServerError, "Could not access video directory", "text/html"});
         }
       }
