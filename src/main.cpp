@@ -361,6 +361,7 @@ struct HTTPHandler {
         auto keyEvent = CefKeyEvent{};
         keyEvent.type = KEYEVENT_KEYDOWN;
         keyEvent.character = '0';
+        keyEvent.windows_key_code = 0x30;
         browser->GetHost()->SendKeyEvent(keyEvent);
         callback(HTTP::Response{req, HTTP::Response::Status::Ok, "", "text/html"});
       } else {
