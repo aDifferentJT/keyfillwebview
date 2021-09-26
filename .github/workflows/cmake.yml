@@ -119,7 +119,7 @@ jobs:
       run: |
         mkdir release
         cp -r build/src/Release build/keyfillwebview
-        7z a -t7z release/keyfillwebview_${{runner.os}}.7z build/keyfillwebview
+        7z a -tzip release/keyfillwebview_${{runner.os}}.zip build/keyfillwebview
       
     - name: Show release
       working-directory: ${{github.workspace}}/release
