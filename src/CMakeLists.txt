@@ -82,6 +82,8 @@ find_package(Boost
   )
 include_directories(${Boost_INCLUDE_DIRS})
 
+find_package(fmt REQUIRED)
+
 #
 # Linux configuration.
 #
@@ -93,6 +95,8 @@ if(OS_LINUX)
   add_dependencies(${CEF_TARGET} libcef_dll_wrapper)
   target_link_libraries(${CEF_TARGET} libcef_lib libcef_dll_wrapper ${CEF_STANDARD_LIBS})
   target_link_libraries(${CEF_TARGET} SDL2)
+
+  target_link_libraries(${CEF_TARGET} fmt::fmt)
 
   # Set rpath so that libraries can be placed next to the executable.
   set_target_properties(${CEF_TARGET} PROPERTIES INSTALL_RPATH "$ORIGIN")
@@ -127,6 +131,7 @@ if(OS_MAC)
   endif()
 
   set(CMAKE_OSX_DEPLOYMENT_TARGET 11)
+  list(APPEND CEF_COMPILER_FLAGS -mmacosx-version-min=11)
 
   list(APPEND CEF_COMPILER_FLAGS -Wno-deprecated-declarations -Wno-newline-eof)
 
@@ -150,6 +155,9 @@ if(OS_MAC)
   add_dependencies(${CEF_TARGET} libcef_dll_wrapper)
   target_link_libraries(${CEF_TARGET} libcef_dll_wrapper ${CEF_STANDARD_LIBS})
   target_link_libraries(${CEF_TARGET} SDL2)
+
+  target_link_libraries(${CEF_TARGET} fmt::fmt)
+
   set_target_properties(${CEF_TARGET} PROPERTIES
     MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/mac/Info.plist
     )
@@ -246,6 +254,8 @@ if(OS_WINDOWS)
   find_library(SDL2_LIB SDL2 HINTS "${SDL2_ROOT}/lib/x64")
   find_file(SDL2_DLL SDL2.dll HINTS "${SDL2_ROOT}/lib/x64")
   target_link_libraries(${CEF_TARGET} ${SDL2_LIB})
+
+  target_link_libraries(${CEF_TARGET} fmt::fmt)
 
   if(USE_SANDBOX)
     # Logical target used to link the cef_sandbox library.

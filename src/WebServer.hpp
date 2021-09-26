@@ -186,7 +186,8 @@ class WebServer {
               , [this, stream] {
                   auto buffer = std::make_shared<beast::flat_buffer>();
                   auto parser = std::make_shared<http::request_parser<http::string_body>>();
-                  parser->body_limit(10000);
+                  // TODO storing this in memory, ouch, switch to chunks
+                  parser->body_limit((std::numeric_limits<std::uint64_t>::max)());
 
                   http::async_read
                     ( *stream

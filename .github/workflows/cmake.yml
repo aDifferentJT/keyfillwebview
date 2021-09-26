@@ -47,17 +47,17 @@ jobs:
         7z x cef.tar
         echo "CEF_ROOT=$(${PWD}.ToString().Replace("\","/"))/cef_binary_93.1.11+g9e254fa+chromium-93.0.4577.63_windows64_minimal" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
 
-    - name: Install boost and SDL2 (Linux)
+    - name: Install boost, SDL2 and libfmt (Linux)
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install libboost-dev libsdl2-dev
+        sudo apt-get install libboost-dev libsdl2-dev libfmt-dev
 
-    - name: Install boost and SDL2 (macOS)
+    - name: Install boost, SDL2 and libfmt (macOS)
       if: runner.os == 'macOS'
       run: |
         brew update
-        brew install boost sdl2
+        brew install boost sdl2 fmt
 
     - name: Install boost (Windows)
       if: runner.os == 'Windows'
@@ -74,6 +74,17 @@ jobs:
         unzip SDL2.zip
         echo "SDL2_ROOT=$(${PWD}.ToString().Replace("\","/"))/SDL2-2.0.16" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
         ls "$(${PWD}.ToString().Replace("\","/"))/SDL2-2.0.16"
+
+    - name: Install fmt (Windows
+      if: runner.os == 'Windows'
+      run: |
+        git clone https://github.com/fmtlib/fmt.git
+        cd fmt
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build . --config Release
+        cmake --install .
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.

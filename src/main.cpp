@@ -8,14 +8,17 @@
 #include "WebServer.hpp"
 
 #include <condition_variable>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <thread>
 
-#include <iostream>
-#include <sstream>
+#include <fmt/core.h>
 
 #ifdef __APPLE__
 #import <Cocoa/Cocoa.h>
@@ -29,95 +32,127 @@
 
 using namespace std::literals;
 
-constexpr auto index_html = R"(
+auto operator""_p(char const * data, std::size_t length) -> std::filesystem::path {
+  return std::string_view{data, length};
+}
+
+#if defined(linux) || defined(__APPLE__)
+static auto const config_dir = std::filesystem::path{std::getenv("HOME")} / ".config"_p / "keyfillwebview"_p;
+#elif defined(WIN32)
+static auto const config_dir = std::filesystem::path{std::getenv("APPDATA")} / "keyfillwebview"_p;
+#else
+#error Unknown platform
+#endif
+
+static auto const video_dir = config_dir / "videos"_p;
+
+constexpr auto index_html1 = R"html(
   <label for="url">URL:</label>
   <input type="text" id="url">
   <button id="load">Load</button>
   <button id="force_load">Force Load</button>
-  <button id="reset">Reset</button>
-  <button id="shutdown">Shutdown</button>
+  <button onclick="fetch(&quot;/reset&quot;, {method: &quot;post&quot;})">Reset</button>
+  <button onclick="fetch(&quot;/shutdown&quot;, {method: &quot;post&quot;})">Shutdown</button>
+  <hr/>
+  <h3>Upload Video</h3>
+  <input type="file" id="upload_video_file"/>
+  <button id="upload_video">Upload</button>
+  <hr/>
+  <h3>Play Video</h3>
+  <select name="select_video" id="select_video">
+)html";
+constexpr auto index_html2 = R"html(
+  </select>
+  <button id="load_video">Load</button>
+  <button id="load_video_looping">Load (Looping)</button>
+  <button onclick="fetch(&quot;/play_video&quot;,  {method: &quot;post&quot;})">Play </button>
+  <button onclick="fetch(&quot;/pause_video&quot;, {method: &quot;post&quot;})">Pause</button>
   <script type="text/javascript">
     const url = document.getElementById("url");
-    const load = document.getElementById("load");
-    const force_load = document.getElementById("force_load");
-    const shutdown = document.getElementById("shutdown");
 
-    load.addEventListener
-      ( "click"
-      , async _ => {
-          try {
-            const response = await fetch
-              ( "/load"
-              , { method: "post"
-                , body: url.value
-                }
-              );
-          } catch(err) {
-            console.error(`Error: ${err}`);
-          }
-        }
-      );
+    document.getElementById("load").onclick = async _ => {
+      try {
+        const response = await fetch
+          ( "/load"
+          , { method: "post"
+            , body: url.value
+            }
+          );
+      } catch(err) {
+        console.error(`Error: ${err}`);
+      }
+    };
 
-    force_load.addEventListener
-      ( "click"
-      , async _ => {
-          try {
-            const response = await fetch
-              ( "/force_load"
-              , { method: "post"
-                , body: url.value
-                }
-              );
-          } catch(err) {
-            console.error(`Error: ${err}`);
-          }
-        }
-      );
+    document.getElementById("force_load").onclick = async _ => {
+      try {
+        const response = await fetch
+          ( "/force_load"
+          , { method: "post"
+            , body: url.value
+            }
+          );
+      } catch(err) {
+        console.error(`Error: ${err}`);
+      }
+    };
 
-    reset.addEventListener
-      ( "click"
-      , async _ => {
-          try {
-            const response = await fetch
-              ( "/reset"
-              , {method: "post"}
-              );
-          } catch(err) {
-            console.error(`Error: ${err}`);
-          }
-        }
-      );
+    document.getElementById("upload_video").onclick = async _ => {
+      try {
+        const file = document.getElementById("upload_video_file").files[0];
+        const response = await fetch
+          ( "/upload_video/" + file.name
+          , { method: "post"
+            , body: file
+            }
+          );
+        window.location.reload(true);
+      } catch(err) {
+        console.error(`Error: ${err}`);
+      }
+    };
 
-    shutdown.addEventListener
-      ( "click"
-      , async _ => {
-          try {
-            const response = await fetch
-              ( "/shutdown"
-              , {method: "post"}
-              );
-          } catch(err) {
-            console.error(`Error: ${err}`);
-          }
-        }
-      );
+    document.getElementById("load_video").onclick = async _ => {
+      try {
+        const response = await fetch
+          ( "/load_video"
+          , { method: "post"
+            , body: document.getElementById("select_video").value
+            }
+          );
+      } catch(err) {
+        console.error(`Error: ${err}`);
+      }
+    };
+
+    document.getElementById("load_video_looping").onclick = async _ => {
+      try {
+        const response = await fetch
+          ( "/load_video_looping"
+          , { method: "post"
+            , body: document.getElementById("select_video").value
+            }
+          );
+      } catch(err) {
+        console.error(`Error: ${err}`);
+      }
+    };
   </script>
-)"sv;
+)html"sv;
 
-constexpr auto instructions_html1 = R"(
-  <!DOCTYPE html>
-  <html>
+constexpr auto instructions_html = R"(
+<!DOCTYPE html>
+<html>
   <head>
     <title>keyfillwebview instructions</title>
     <meta charset="utf-8" />
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style type="text/css">
-    body {
+    body {{
       margin: 0;
       padding: 0;
-    }
-    div {
+    }}
+    div {{
       width: 1000px;
       margin: 5em auto;
       padding: 2em;
@@ -125,26 +160,63 @@ constexpr auto instructions_html1 = R"(
       background-color: #101070;
       font-size: xx-large;
       border-radius: 0.5em;
-    }
-    @media (max-width: 700px) {
-      div {
+    }}
+    @media (max-width: 700px) {{
+      div {{
         margin: 0 auto;
         width: auto;
-      }
-    }
+      }}
+    }}
     </style>
   </head>
 
   <body>
-  <div>
-    <h1>keyfillwebview</h1>
-    <p>To load a page go to
-http://)"sv;
-constexpr auto instructions_html2 = R"(:8080</p>
-  </div>
+    <div>
+      <h1>keyfillwebview</h1>
+      <p>To load a page go to http://{}:8080</p>
+    </div>
   </body>
-  </html>
+</html>
 )"sv;
+
+constexpr auto video_player_html = R"html(
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>keyfillwebview video player: {0}</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  </head>
+
+  <body style="margin: 0; padding: 0">
+    <video id="video" width="100%" height="100%"/>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const video = document.getElementById("video");
+
+      video.src = "/get_video/" + params.get("video");
+      video.loop = params.get("looping") === "true";
+      video.onended = () => window.location = params.get("returnto");
+
+      fetch("/play_video", {method: "post"});
+
+      document.onkeydown = e => {
+        switch (e.key) {
+          case "0":
+            video.play();
+            break;
+          case "1":
+            video.pause();
+            break;
+          default:
+            console.log("Unknown key: " + e.key);
+            break;
+        }
+      };
+    </script>
+  </body>
+</html>
+)html"sv;
 
 template <typename F>
 class StringVisitor : public CefStringVisitor {
@@ -245,14 +317,100 @@ struct HTTPHandler {
         return callback(HTTP::Response{req, HTTP::Response::Status::InternalServerError, "Could not shutdown", "text/html"});
       }
 
-      return callback(HTTP::Response{req, HTTP::Response::Status::Ok, "", "text/html"});
+      callback(HTTP::Response{req, HTTP::Response::Status::Ok, "", "text/html"});
 #else
-      return callback(HTTP::Response{req, HTTP::Response::Status::NotImplemented, "Shutdown not yet implemented for this OS", "text/html"});
+      callback(HTTP::Response{req, HTTP::Response::Status::NotImplemented, "Shutdown not yet implemented for this OS", "text/html"});
 #endif
+    } else if (req.method == HTTP::Request::Verb::Post && req.target.find("/upload_video/") == 0) {
+      auto const filename = req.target.substr(sizeof("/upload_video/") - 1);
+      auto ec = std::error_code{};
+      std::filesystem::create_directories(video_dir, ec);
+      if (ec) {
+        return callback(HTTP::Response{req, HTTP::Response::Status::InternalServerError, "Could not create video directory", "text/html"});
+      }
+      auto f = std::ofstream{video_dir / filename, std::ios::binary};
+      f.write(req.body.data(), req.body.size());
+      callback(HTTP::Response{req, HTTP::Response::Status::Ok, "", "text/html"});
+    } else if (req.method == HTTP::Request::Verb::Post && req.target == "/load_video") {
+      if (browser) {
+        auto frame = browser->GetMainFrame();
+        auto returnto = frame->GetURL().ToString();
+        if (returnto.find("http://127.0.0.1:8080/video_player") == 0) {
+          returnto = returnto.substr(returnto.find("&returnto=") + sizeof("&returnto=") - 1);
+        }
+        frame->LoadURL(fmt::format("http://127.0.0.1:8080/video_player?video={}&looping=false&returnto={}", req.body, returnto));
+        callback(HTTP::Response{req, HTTP::Response::Status::Ok, "", "text/html"});
+      } else {
+        callback(HTTP::Response{req, HTTP::Response::Status::ServiceUnavailable, "Browser not yet initialized", "text/html"});
+      }
+    } else if (req.method == HTTP::Request::Verb::Post && req.target == "/load_video_looping") {
+      if (browser) {
+        auto frame = browser->GetMainFrame();
+        auto returnto = frame->GetURL().ToString();
+        if (returnto.find("http://127.0.0.1:8080/video_player") == 0) {
+          returnto = returnto.substr(returnto.find("&returnto=") + sizeof("&returnto=") - 1);
+        }
+        frame->LoadURL(fmt::format("http://127.0.0.1:8080/video_player?video={}&looping=true&returnto={}", req.body, returnto));
+        callback(HTTP::Response{req, HTTP::Response::Status::Ok, "", "text/html"});
+      } else {
+        callback(HTTP::Response{req, HTTP::Response::Status::ServiceUnavailable, "Browser not yet initialized", "text/html"});
+      }
+    } else if (req.method == HTTP::Request::Verb::Post && req.target == "/play_video") {
+      if (browser) {
+        //browser->GetMainFrame()->ExecuteJavaScript(R"(document.getElementsByTagName("video")[0].play())", "", 0);
+        auto keyEvent = CefKeyEvent{};
+        keyEvent.type = KEYEVENT_KEYDOWN;
+        keyEvent.character = '0';
+        browser->GetHost()->SendKeyEvent(keyEvent);
+        callback(HTTP::Response{req, HTTP::Response::Status::Ok, "", "text/html"});
+      } else {
+        callback(HTTP::Response{req, HTTP::Response::Status::ServiceUnavailable, "Browser not yet initialized", "text/html"});
+      }
+    } else if (req.method == HTTP::Request::Verb::Post && req.target == "/pause_video") {
+      if (browser) {
+        browser->GetMainFrame()->ExecuteJavaScript(R"(document.getElementsByTagName("video")[0].pause())", "", 0);
+        callback(HTTP::Response{req, HTTP::Response::Status::Ok, "", "text/html"});
+      } else {
+        callback(HTTP::Response{req, HTTP::Response::Status::ServiceUnavailable, "Browser not yet initialized", "text/html"});
+      }
     } else if (req.target == "/" || req.target == "/?") {
-      callback(HTTP::Response{req, HTTP::Response::Status::Ok, std::string{index_html}, "text/html"});
+      auto index_html = std::stringstream{};
+      index_html << index_html1;
+
+      auto ec = std::error_code{};
+      if (std::filesystem::is_directory(video_dir, ec)) {
+        auto ec = std::error_code{};
+        std::transform
+          ( std::filesystem::directory_iterator{video_dir, ec}
+          , std::filesystem::directory_iterator{}
+          , std::ostream_iterator<std::string>{index_html}
+          , [] (std::filesystem::directory_entry video) {
+              return fmt::format("<option value=\"{0}\">{0}</option>", video.path().filename().string());
+            }
+          );
+        if (ec) {
+          return callback(HTTP::Response{req, HTTP::Response::Status::InternalServerError, "Could not access video directory", "text/html"});
+        }
+      }
+  
+      index_html << index_html2;
+
+      callback(HTTP::Response{req, HTTP::Response::Status::Ok, std::move(index_html).str(), "text/html"});
     } else if (req.target == "/instructions") {
-      callback(HTTP::Response{req, HTTP::Response::Status::Ok, std::string{instructions_html1} + asio::ip::host_name() + std::string{instructions_html2}, "text/html"});
+      callback(HTTP::Response{req, HTTP::Response::Status::Ok, fmt::format(instructions_html, asio::ip::host_name()), "text/html"});
+    } else if (req.target.find("/video_player") == 0) {
+      callback(HTTP::Response{req, HTTP::Response::Status::Ok, std::string{video_player_html}, "text/html"});
+    } else if (req.target.find("/get_video/") == 0) {
+      auto const filename = req.target.substr(sizeof("/get_video/") - 1);
+      auto f = std::ifstream{video_dir / filename, std::ios::binary};
+      auto video = std::string{};
+      auto const batchSize = 1024;
+      while (!f.eof()) {
+        video.resize(video.size() + batchSize);
+        f.read(&*video.end() - batchSize, batchSize);
+        video.resize(video.size() - batchSize + f.gcount());
+      }
+      callback(HTTP::Response{req, HTTP::Response::Status::Ok, video, ""});
     } else {
       callback(HTTP::Response{req, HTTP::Response::Status::NotFound, "404 : Not Found", "text/html"});
     }

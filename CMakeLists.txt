@@ -136,6 +136,9 @@ cmake_minimum_required(VERSION 2.8.12.1)
 
 set(CMAKE_CXX_STANDARD 17)
 
+add_compile_definitions(proprietary_codecs=1)
+add_compile_definitions(ffmpeg_branding=Chrome)
+
 # Only generate Debug and Release configuration types.
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
 
