@@ -255,7 +255,7 @@ if(OS_WINDOWS)
   find_file(SDL2_DLL SDL2.dll HINTS "${SDL2_ROOT}/lib/x64")
   target_link_libraries(${CEF_TARGET} ${SDL2_LIB})
 
-  target_link_libraries(${CEF_TARGET} fmt::fmt)
+  target_link_libraries(${CEF_TARGET} fmt::fmt-header-only)
 
   if(USE_SANDBOX)
     # Logical target used to link the cef_sandbox library.

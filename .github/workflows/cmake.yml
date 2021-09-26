@@ -75,7 +75,7 @@ jobs:
         echo "SDL2_ROOT=$(${PWD}.ToString().Replace("\","/"))/SDL2-2.0.16" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
         ls "$(${PWD}.ToString().Replace("\","/"))/SDL2-2.0.16"
 
-    - name: Install fmt (Windows
+    - name: Install fmt (Windows)
       if: runner.os == 'Windows'
       run: |
         git clone https://github.com/fmtlib/fmt.git
