@@ -51,6 +51,7 @@ constexpr auto index_html1 = R"html(
   <input type="text" id="url">
   <button id="load">Load</button>
   <button id="force_load">Force Load</button>
+  <button id="set_default">Set Default</button>
   <button onclick="fetch(&quot;/reset&quot;, {method: &quot;post&quot;})">Reset</button>
   <button onclick="fetch(&quot;/shutdown&quot;, {method: &quot;post&quot;})">Shutdown</button>
   <hr/>
@@ -87,6 +88,19 @@ constexpr auto index_html2 = R"html(
       try {
         const response = await fetch
           ( "/force_load"
+          , { method: "post"
+            , body: url.value
+            }
+          );
+      } catch(err) {
+        console.error(`Error: ${err}`);
+      }
+    };
+
+    document.getElementById("set_default").onclick = async _ => {
+      try {
+        const response = await fetch
+          ( "/set_default"
           , { method: "post"
             , body: url.value
             }
@@ -267,6 +281,10 @@ struct HTTPHandler {
       } else {
         callback(HTTP::Response{req, HTTP::Response::Status::ServiceUnavailable, "Browser not yet initialized", "text/html"});
       }
+    } else if (req.method == HTTP::Request::Verb::Post && req.target == "/set_default") {
+      auto defaultUrlFile = std::ofstream{SDL_GetPrefPath("nixCodeX", "keyfillwebview") + "defaultUrl"s};
+      defaultUrlFile << req.body;
+      callback(HTTP::Response{req, HTTP::Response::Status::Ok, "", "text/html"});
     } else if (req.method == HTTP::Request::Verb::Post && req.target == "/is_active") {
       if (browser) {
         auto frame = browser->GetMainFrame();
@@ -530,7 +548,14 @@ class App : public CefApp, CefBrowserProcessHandler {
       info.SetAsPopup(nullptr, "Web View");
 #endif
 
-      CefBrowserHost::CreateBrowser(info, client, "http://127.0.0.1:8080/instructions", settings, nullptr, nullptr);
+      auto url = "http://127.0.0.1:8080/instructions"s;
+
+      auto defaultUrlFile = std::ifstream{SDL_GetPrefPath("nixCodeX", "keyfillwebview") + "defaultUrl"s};
+      if (defaultUrlFile) {
+        defaultUrlFile >> url;
+      }
+
+      CefBrowserHost::CreateBrowser(info, client, url, settings, nullptr, nullptr);
     }
 };
 
@@ -663,6 +688,26 @@ auto main(int argc, char** argv) -> int {
 #ifdef __APPLE__
   [[NSBundle mainBundle] loadNibNamed:@"MainMenu" owner:NSApp topLevelObjects:nil];
 #endif
+
+  auto refreshTimer = L2D::Timer
+    { 2000
+    , [&browser](uint32_t milliseconds) -> uint32_t {
+        if (browser) {
+          auto frame = browser->GetMainFrame();
+          frame->GetSource
+            ( new StringVisitor
+              { [browser, frame] (CefString const & source) {
+                  auto source_stdstr = source.ToString();
+                  if (source_stdstr == "<html><head></head><body></body></html>") {
+                    browser->Reload();
+                  }
+                }
+              }
+            );
+        }
+        return milliseconds;
+      }
+    };
 
   auto running = true;
   while(running) {

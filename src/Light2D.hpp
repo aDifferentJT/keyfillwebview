@@ -576,6 +576,45 @@ namespace L2D {
     };
   };
 
+  template <typename Callback>
+  class Timer {
+    private:
+      Callback callback;
+      SDL_TimerID id;
+
+      static auto call(uint32_t milliseconds, void* _this) -> uint32_t {
+        return static_cast<Timer*>(_this)->callback(milliseconds);
+      }
+
+    public:
+      Timer(uint32_t milliseconds, Callback callback)
+        : callback{std::move(callback)}
+        , id{SDL_AddTimer(milliseconds, call, this)}
+      {}
+
+      Timer(Timer const &) = delete;
+
+      Timer(Timer&& that)
+        : callback{std::move(that.callback)}
+        , id{std::exchange(that.id, 0)}
+      {}
+
+      friend void swap(Timer& lhs, Timer& rhs) {
+        using std::swap;
+        swap(lhs.callback, rhs.callback);
+        swap(lhs.id, rhs.id);
+      }
+
+      auto operator=(Timer that) -> Timer& {
+        swap(*this, that);
+        return *this;
+      }
+
+      ~Timer() {
+        SDL_RemoveTimer(id);
+      }
+  };
+
   void delay(uint32_t milliseconds) {
     SDL_Delay(milliseconds);
   }

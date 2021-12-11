@@ -8,7 +8,7 @@ There are versions for Linux, macOS and Windows.
 ## Operation
 
 When you open keyfillwebview it will display a page giving the URL to go to change the settings.
-There you will find a text box for the URL to display and 4 buttons:
+There you will find a text box for the URL to display and 5 buttons:
 
 #### Load
 
@@ -17,6 +17,10 @@ This loads a new page if there is not currently a page loaded, that occurs if yo
 #### Force Load
 
 This loads a new page regardless of current status.
+
+#### Set Default
+
+This sets a page to be loaded on startup instead of the instructions.
 
 #### Reset
 
@@ -30,7 +34,7 @@ Note that this shuts down the OS but does not power-off the computer, this is be
 
 ## API
 
-There are 5 methods in the API, 4 of them corresponding to the above [overations](#operation), all are performed by sending HTTP POST requests to the URL given on the instructions page, which will be on port 8080.
+There are 6 methods in the API, 5 of them corresponding to the above [overations](#operation), all are performed by sending HTTP POST requests to the URL given on the instructions page, which will be on port 8080.
 
 #### `/load`
 
@@ -42,6 +46,10 @@ It returns a 503 Service Unavailable error if the browser has not yet been loade
 
 This is as the [force_load](#force-load) button and the URL is taken from the body of the request.
 It returns a 503 Service Unavailable error if the browser has not yet been loaded.
+
+#### `/set_default`
+
+This is as the [set_default](#set-default) button and the URL is taken from the body of the request.
 
 #### `/is_active`
 
