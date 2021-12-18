@@ -47,13 +47,22 @@ static auto const config_dir = std::filesystem::path{std::getenv("APPDATA")} / "
 static auto const video_dir = config_dir / "videos"_p;
 
 constexpr auto index_html1 = R"html(
+  <h1>keyfillwebview Control Panel</h1>
+  <h3>System</h3>
+  <button onclick="fetch(&quot;/shutdown&quot;, {method: &quot;post&quot;})">Shutdown</button>
+  <hr/>
+  <h3>Loaded Page</h3>
   <label for="url">URL:</label>
   <input type="text" id="url">
   <button id="load">Load</button>
   <button id="force_load">Force Load</button>
   <button id="set_default">Set Default</button>
   <button onclick="fetch(&quot;/reset&quot;, {method: &quot;post&quot;})">Reset</button>
-  <button onclick="fetch(&quot;/shutdown&quot;, {method: &quot;post&quot;})">Shutdown</button>
+  <hr/>
+  <h3>Visibility</h3>
+  <button onclick="fetch(&quot;/show&quot;, {method: &quot;post&quot;})">Show</button>
+  <button onclick="fetch(&quot;/clear&quot;, {method: &quot;post&quot;})">Clear</button>
+  <button onclick="fetch(&quot;/black&quot;, {method: &quot;post&quot;})">Black</button>
   <hr/>
   <h3>Upload Video</h3>
   <input type="file" id="upload_video_file"/>
@@ -247,12 +256,41 @@ class StringVisitor : public CefStringVisitor {
     void Visit(CefString const & str) override { f(str); }
 };
 
+enum class Mode { Show, Clear, Black };
+
 struct HTTPHandler {
   CefRefPtr<CefBrowser>& browser;
+  Mode& mode;
 
   template <typename Callback>
   auto operator()(HTTP::Request req, Callback callback) {
-    if (req.method == HTTP::Request::Verb::Post && req.target == "/load") {
+    if (req.method == HTTP::Request::Verb::Post && req.target == "/shutdown") {
+#ifdef WIN32
+      auto process = HANDLE{};
+      if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &process)) {
+        return callback(HTTP::Response{req, HTTP::Response::Status::InternalServerError, "Could not get token", "text/html"});
+      }
+
+      auto privileges = TOKEN_PRIVILEGES{};
+      LookupPrivilegeValue(nullptr, SE_SHUTDOWN_NAME, &privileges.Privileges[0].Luid);
+      privileges.PrivilegeCount = 1;
+      privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+      AdjustTokenPrivileges(process, false, &privileges, 0, nullptr, 0);
+
+      if (GetLastError() != ERROR_SUCCESS) {
+        return callback(HTTP::Response{req, HTTP::Response::Status::InternalServerError, "Could not adjust privileges", "text/html"});
+      }
+
+      if (!ExitWindowsEx(EWX_HYBRID_SHUTDOWN | EWX_SHUTDOWN, SHTDN_REASON_MAJOR_APPLICATION | SHTDN_REASON_FLAG_PLANNED)) {
+        return callback(HTTP::Response{req, HTTP::Response::Status::InternalServerError, "Could not shutdown", "text/html"});
+      }
+
+      callback(HTTP::Response{req, HTTP::Response::Status::Ok, "", "text/html"});
+#else
+      callback(HTTP::Response{req, HTTP::Response::Status::NotImplemented, "Shutdown not yet implemented for this OS", "text/html"});
+#endif
+    } else if (req.method == HTTP::Request::Verb::Post && req.target == "/load") {
       if (browser) {
         auto frame = browser->GetMainFrame();
         frame->GetSource
@@ -313,32 +351,15 @@ struct HTTPHandler {
       } else {
         callback(HTTP::Response{req, HTTP::Response::Status::ServiceUnavailable, "Browser not yet initialized", "text/html"});
       }
-    } else if (req.method == HTTP::Request::Verb::Post && req.target == "/shutdown") {
-#ifdef WIN32
-      auto process = HANDLE{};
-      if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &process)) {
-        return callback(HTTP::Response{req, HTTP::Response::Status::InternalServerError, "Could not get token", "text/html"});
-      }
-
-      auto privileges = TOKEN_PRIVILEGES{};
-      LookupPrivilegeValue(nullptr, SE_SHUTDOWN_NAME, &privileges.Privileges[0].Luid);
-      privileges.PrivilegeCount = 1;
-      privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-
-      AdjustTokenPrivileges(process, false, &privileges, 0, nullptr, 0);
-
-      if (GetLastError() != ERROR_SUCCESS) {
-        return callback(HTTP::Response{req, HTTP::Response::Status::InternalServerError, "Could not adjust privileges", "text/html"});
-      }
-
-      if (!ExitWindowsEx(EWX_HYBRID_SHUTDOWN | EWX_SHUTDOWN, SHTDN_REASON_MAJOR_APPLICATION | SHTDN_REASON_FLAG_PLANNED)) {
-        return callback(HTTP::Response{req, HTTP::Response::Status::InternalServerError, "Could not shutdown", "text/html"});
-      }
-
-      callback(HTTP::Response{req, HTTP::Response::Status::Ok, "", "text/html"});
-#else
-      callback(HTTP::Response{req, HTTP::Response::Status::NotImplemented, "Shutdown not yet implemented for this OS", "text/html"});
-#endif
+    } else if (req.method == HTTP::Request::Verb::Post && req.target == "/show") {
+      mode = Mode::Show;
+      browser->GetHost()->Invalidate(PET_VIEW);
+    } else if (req.method == HTTP::Request::Verb::Post && req.target == "/clear") {
+      mode = Mode::Clear;
+      browser->GetHost()->Invalidate(PET_VIEW);
+    } else if (req.method == HTTP::Request::Verb::Post && req.target == "/black") {
+      mode = Mode::Black;
+      browser->GetHost()->Invalidate(PET_VIEW);
     } else if (req.method == HTTP::Request::Verb::Post && req.target.find("/upload_video/") == 0) {
       auto const filename = req.target.substr(sizeof("/upload_video/") - 1);
       auto ec = std::error_code{};
@@ -448,6 +469,7 @@ class Client : public CefClient, CefLifeSpanHandler, CefRenderHandler {
   private:
     CefRefPtr<CefBrowser>& _browser;
     std::optional<KeyFill::Windows>& keyFill;
+    Mode& mode;
 
     std::condition_variable cv;
     std::mutex mutex;
@@ -456,9 +478,11 @@ class Client : public CefClient, CefLifeSpanHandler, CefRenderHandler {
     Client
       ( CefRefPtr<CefBrowser>& browser
       , std::optional<KeyFill::Windows>& keyFill
+      , Mode& mode
       )
       : _browser{browser}
       , keyFill{keyFill}
+      , mode{mode}
       {}
 
     // CefClient methods
@@ -495,11 +519,21 @@ class Client : public CefClient, CefLifeSpanHandler, CefRenderHandler {
 */
 
       if (keyFill) {
-        {
-          auto dst = keyFill->lock();
-          std::memcpy(dst.pixels.get(), buffer, dst.pitch * 1080);
+        switch (mode) {
+          case Mode::Show:
+            {
+              auto dst = keyFill->lock();
+              std::memcpy(dst.pixels.get(), buffer, dst.pitch * 1080);
+            }
+            keyFill->render();
+            break;
+          case Mode::Clear:
+            keyFill->renderClear();
+            break;
+          case Mode::Black:
+            keyFill->renderBlack();
+            break;
         }
-        keyFill->render();
       }
 
 /*
@@ -519,14 +553,17 @@ class App : public CefApp, CefBrowserProcessHandler {
   private:
     CefRefPtr<CefBrowser>& _browser;
     std::optional<KeyFill::Windows>& keyFill;
+    Mode& mode;
 
   public:
     App
       ( CefRefPtr<CefBrowser>& browser
       , std::optional<KeyFill::Windows>& keyFill
+      , Mode& mode
       )
       : _browser{browser}
       , keyFill{keyFill}
+      , mode{mode}
       {}
 
     // CefApp methods
@@ -542,7 +579,7 @@ class App : public CefApp, CefBrowserProcessHandler {
 
       settings.windowless_frame_rate = 25;
 
-      auto client = CefRefPtr<Client>{new Client{_browser, keyFill}};
+      auto client = CefRefPtr<Client>{new Client{_browser, keyFill, mode}};
 
 #ifdef WIN32
       info.SetAsPopup(nullptr, "Web View");
@@ -655,8 +692,9 @@ auto main(int argc, char** argv) -> int {
 
   auto browser = CefRefPtr<CefBrowser>{};
   auto keyFill = std::optional<KeyFill::Windows>{};
+  auto mode = Mode::Show;
 
-  auto app = CefRefPtr<App>{new App{browser, keyFill}};
+  auto app = CefRefPtr<App>{new App{browser, keyFill, mode}};
 
   if (auto exitCode = CefExecuteProcess(mainArgs, nullptr, nullptr); exitCode >= 0) {
     return exitCode;
@@ -666,7 +704,7 @@ auto main(int argc, char** argv) -> int {
   auto const port = static_cast<unsigned short>(8080);
   auto const noThreads = 4;
 
-  auto server = WebServer<HTTPHandler>{HTTPHandler{browser}, boost::asio::ip::tcp::endpoint{address, port}, noThreads};
+  auto server = WebServer<HTTPHandler>{HTTPHandler{browser, mode}, boost::asio::ip::tcp::endpoint{address, port}, noThreads};
 
   auto l2DInit = L2D::L2DInit{};
 

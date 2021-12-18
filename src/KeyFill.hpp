@@ -77,6 +77,17 @@ namespace KeyFill {
           );
         renderer.present();
       }
+
+      auto renderClear() {
+        renderer.fill({0, 0, 3840, 1080}, {0, 0, 0, 0});
+        renderer.present();
+      }
+
+      auto renderBlack() {
+        renderer.fill({0, 0, 1920, 1080}, {0, 0, 0, 0});
+        renderer.fill({1920, 0, 1920, 1080}, {255, 255, 255, 255});
+        renderer.present();
+      }
   };
 }
 

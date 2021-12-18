@@ -8,7 +8,20 @@ There are versions for Linux, macOS and Windows.
 ## Operation
 
 When you open keyfillwebview it will display a page giving the URL to go to change the settings.
-There you will find a text box for the URL to display and 5 buttons:
+
+### System
+
+This section contains some controls for the server itself
+
+#### Shutdown
+
+This shuts down the computer rendering the graphics.
+
+Note that this shuts down the OS but does not power-off the computer, this is because some BIOSes support auto power-on after unexpected power loss so if you shut down but do not power-off until you remove power then it will automatically start up after power is restored.
+
+### Loaded Page
+
+Here you will find a text box for the URL to display and controls to change it
 
 #### Load
 
@@ -26,15 +39,41 @@ This sets a page to be loaded on startup instead of the instructions.
 
 This goes back to displaying the instructions.
 
-#### Shutdown
+### Visibilty
 
-This shuts down the computer rendering the graphics.
+This section allows you to control the visibility of the output, there are 3 modes
 
-Note that this shuts down the OS but does not power-off the computer, this is because some BIOSes support auto power-on after unexpected power loss so if you shut down but do not power-off until you remove power then it will automatically start up after power is restored.
+#### Show
+
+This will show the output.
+
+#### Clear
+
+This will hide the output, making it transparent and showing anything underneath in the keyer.
+
+#### Black
+
+This will output opaque black, hiding anything underneath in the keyer.
+
+### Upload Video
+
+This is experimental
+
+### Play Video
+
+This is experimental
 
 ## API
 
 There are 6 methods in the API, 5 of them corresponding to the above [overations](#operation), all are performed by sending HTTP POST requests to the URL given on the instructions page, which will be on port 8080.
+
+#### `/shutdown`
+
+This is as the [shutdown](#shutdown) button.
+It returns a 501 Not Implemented error if the server is running on an OS for which shutting down isn't yet supported.
+It returns a 500 Internal Server Error if there is any other problem initiating the shutdown.
+
+At the moment this is only implemented on Windows.
 
 #### `/load`
 
@@ -61,11 +100,17 @@ It returns a 503 Service Unavailable error if the browser has not yet been loade
 This is as the [reset](#reset) button.
 It returns a 503 Service Unavailable error if the browser has not yet been loaded.
 
-#### `/shutdown`
+#### `/show`
 
-This is as the [shutdown](#shutdown) button.
-It returns a 501 Not Implemented error if the server is running on an OS for which shutting down isn't yet supported.
-It returns a 500 Internal Server Error if there is any other problem initiating the shutdown.
+This is as the [show](#show) button.
+
+#### `/clear`
+
+This is as the [clear](#clear) button.
+
+#### `/black`
+
+This is as the [black](#black) button.
 
 ## Building
 
