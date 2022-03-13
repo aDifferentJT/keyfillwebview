@@ -55,6 +55,9 @@ constexpr auto index_html1 = R"html(
   <label for="url">URL:</label>
   <input type="text" id="url">
   <button id="load">Load</button>
+  <button id="reload">Reload</button>
+  <button onclick="fetch(&quot;/reload&quot;, {method: &quot;post&quot;})">Reload</button>
+  <button onclick="fetch(&quot;/reload_ignoring_cache&quot;, {method: &quot;post&quot;})">Reload Ignoring Cache</button>
   <button id="force_load">Force Load</button>
   <button id="set_default">Set Default</button>
   <button onclick="fetch(&quot;/reset&quot;, {method: &quot;post&quot;})">Reset</button>
@@ -309,6 +312,20 @@ struct HTTPHandler {
               }
             }
           );
+      } else {
+        callback(HTTP::Response{req, HTTP::Response::Status::ServiceUnavailable, "Browser not yet initialized", "text/html"});
+      }
+    } else if (req.method == HTTP::Request::Verb::Post && req.target == "/reload") {
+      if (browser) {
+        browser->Reload();
+        callback(HTTP::Response{req, HTTP::Response::Status::Ok, "", "text/html"});
+      } else {
+        callback(HTTP::Response{req, HTTP::Response::Status::ServiceUnavailable, "Browser not yet initialized", "text/html"});
+      }
+    } else if (req.method == HTTP::Request::Verb::Post && req.target == "/reload_ignoring_cache") {
+      if (browser) {
+        browser->ReloadIgnoreCache();
+        callback(HTTP::Response{req, HTTP::Response::Status::Ok, "", "text/html"});
       } else {
         callback(HTTP::Response{req, HTTP::Response::Status::ServiceUnavailable, "Browser not yet initialized", "text/html"});
       }

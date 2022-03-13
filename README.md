@@ -27,6 +27,14 @@ Here you will find a text box for the URL to display and controls to change it
 
 This loads a new page if there is not currently a page loaded, that occurs if you are either still on the instructions page or the page you tried to load cannot be found.
 
+#### Reload
+
+This reloads the current page.
+
+#### Reload Ignoring Cache
+
+This reloads the current page ignoring the cache.
+
 #### Force Load
 
 This loads a new page regardless of current status.
@@ -79,6 +87,16 @@ At the moment this is only implemented on Windows.
 
 This is as the [load](#load) button and the URL is taken from the body of the request.
 It returns a 403 Forbidden error if there is a page currently being displayed.
+It returns a 503 Service Unavailable error if the browser has not yet been loaded.
+
+#### `/reload`
+
+This is as the [reload](#reload) button.
+It returns a 503 Service Unavailable error if the browser has not yet been loaded.
+
+#### `/reload_ignoring_cache`
+
+This is as the [reload_ignoring_cache](#reload-ignoring-cache) button.
 It returns a 503 Service Unavailable error if the browser has not yet been loaded.
 
 #### `/force_load`
