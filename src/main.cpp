@@ -67,11 +67,9 @@ constexpr auto index_html1 = R"html(
   <button id="force_load">Force Load</button>
   <button id="set_default">Set Default</button>
   <button onclick="fetch(&quot;/reset&quot;, {method: &quot;post&quot;})">Reset</button>
-  <hr/>
-  <h3>Visibility</h3>
+  <h4>Visibility</h4>
   <button onclick="fetch(&quot;/show&quot;,  {method: &quot;post&quot;})">Show</button>
   <button onclick="fetch(&quot;/clear&quot;, {method: &quot;post&quot;})">Clear</button>
-  <button onclick="fetch(&quot;/black&quot;, {method: &quot;post&quot;})">Black</button>
   <hr/>
   <h3>NDI</h3>
   <select name="select_ndi" id="select_ndi">
@@ -285,7 +283,7 @@ private:
   void Visit(CefString const &str) override { f(str); }
 };
 
-enum class Mode { Show, Clear, Black };
+enum class Mode { Show, Clear };
 
 struct HTTPHandler {
   CefRefPtr<CefBrowser> &browser;
@@ -441,10 +439,6 @@ struct HTTPHandler {
     } else if (req.method == HTTP::Request::Verb::Post &&
                req.target == "/clear") {
       mode = Mode::Clear;
-      browser->GetHost()->Invalidate(PET_VIEW);
-    } else if (req.method == HTTP::Request::Verb::Post &&
-               req.target == "/black") {
-      mode = Mode::Black;
       browser->GetHost()->Invalidate(PET_VIEW);
     } else if (req.method == HTTP::Request::Verb::Post &&
                req.target == "/show_ndi") {
@@ -648,16 +642,12 @@ public:
     if (keyFill) {
       switch (mode) {
       case Mode::Show: {
-        auto dst = keyFill->lock(0);
+        auto dst = keyFill->lock(1);
         std::memcpy(dst.pixels.get(), buffer, dst.pitch * 1080);
       }
-        keyFill->render();
         break;
       case Mode::Clear:
-        keyFill->renderClear();
-        break;
-      case Mode::Black:
-        keyFill->renderBlack();
+        keyFill->hide(1);
         break;
       }
     }
@@ -883,31 +873,36 @@ auto main(int argc, char **argv) -> int {
       }
     }
 
-    if (keyFill && receiver) {
-      NDIlib_video_frame_v2_t video_frame;
-      switch (ndilib->recv_capture_v3(receiver, &video_frame, nullptr, nullptr,
-                                      0)) {
-      case NDIlib_frame_type_video: {
-        auto dst = keyFill->lock(1);
-        if (video_frame.xres != 1920) {
-          std::cerr << "Invalid NDI frame size";
+    if (keyFill) {
+      if (receiver) {
+        NDIlib_video_frame_v2_t video_frame;
+        switch (ndilib->recv_capture_v3(receiver, &video_frame, nullptr, nullptr,
+                                        0)) {
+        case NDIlib_frame_type_video: {
+          auto dst = keyFill->lock(0);
+          if (video_frame.xres != 1920) {
+            std::cerr << "Invalid NDI frame size";
+          }
+          if (video_frame.yres != 1080) {
+            std::cerr << "Invalid NDI frame size";
+          }
+          std::memcpy(dst.pixels.get(), video_frame.p_data, dst.pitch * 1080);
+          ndilib->recv_free_video_v2(receiver, &video_frame);
+          break;
         }
-        if (video_frame.yres != 1080) {
-          std::cerr << "Invalid NDI frame size";
+        default:
+          break;
         }
-        std::memcpy(dst.pixels.get(), video_frame.p_data, dst.pitch * 1080);
-        keyFill->render();
-        ndilib->recv_free_video_v2(receiver, &video_frame);
-        break;
-      }
-      default:
-        break;
+      } else {
+        keyFill->hide(0);
       }
     }
 
     CefDoMessageLoopWork();
     // Should use CefSettings.external_message_pump option and
     // CefBrowserProcessHandler::OnScheduleMessagePumpWork()
+
+    keyFill->render();
   }
 
   browser = nullptr;
