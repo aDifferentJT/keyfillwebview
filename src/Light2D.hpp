@@ -195,6 +195,7 @@ namespace L2D {
       friend class Surface;
       friend class Texture;
       friend class StreamingTexture;
+      friend class Renderer;
   };
 
   // Should be a lambda but that doesn't work, something about not exporting operator=
@@ -230,6 +231,7 @@ namespace L2D {
       void fill(Colour colour) {
         SDL_FillRect(surface.get(), nullptr, colour.mapToFormat(surface->format));
       }
+
       void fill(Rect rect, Colour colour) {
         SDL_FillRect(surface.get(), &rect, colour.mapToFormat(surface->format));
       }
@@ -335,6 +337,18 @@ namespace L2D {
       }
 
       void fill(Rect rect, Colour colour) {
+        SDL_SetRenderDrawColor
+          ( renderer.get()
+          , colour.r
+          , colour.g
+          , colour.b
+          , colour.a
+          );
+        SDL_RenderFillRect(renderer.get(), &rect);
+      }
+
+      void fill(Rect rect, Colour colour, BlendMode blendMode) {
+        SDL_SetRenderDrawBlendMode(renderer.get(), blendMode.blendMode);
         SDL_SetRenderDrawColor
           ( renderer.get()
           , colour.r

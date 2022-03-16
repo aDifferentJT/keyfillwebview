@@ -10,6 +10,7 @@
 set(CEFSIMPLE_SRCS
   KeyFill.hpp
   Light2D.hpp
+  NDI.hpp
   sdl.hpp
   )
 set(CEFSIMPLE_SRCS_LINUX
