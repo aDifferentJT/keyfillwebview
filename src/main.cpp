@@ -645,16 +645,10 @@ public:
   void OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
                RectList const &dirtyRects, void const *buffer, int width,
                int height) override {
-    /*
-          auto surface = L2D::Surface{l2DWitness, {1920, 1080},
-       L2D::Surface::Format::BGRA32}; surface.unsafe_blit_buffer(buffer);
-          keyFill.render(surface);
-    */
-
     if (keyFill) {
       switch (mode) {
       case Mode::Show: {
-        auto dst = keyFill->lock();
+        auto dst = keyFill->lock(0);
         std::memcpy(dst.pixels.get(), buffer, dst.pitch * 1080);
       }
         keyFill->render();
@@ -667,14 +661,6 @@ public:
         break;
       }
     }
-
-    /*
-          if (keyFillEvent) {
-            auto lock = std::unique_lock{mutex};
-            keyFillEvent->push(buffer, cv);
-            cv.wait(lock);
-          }
-    */
   }
 };
 
@@ -902,7 +888,7 @@ auto main(int argc, char **argv) -> int {
       switch (ndilib->recv_capture_v3(receiver, &video_frame, nullptr, nullptr,
                                       0)) {
       case NDIlib_frame_type_video: {
-        auto dst = keyFill->lock2();
+        auto dst = keyFill->lock(1);
         if (video_frame.xres != 1920) {
           std::cerr << "Invalid NDI frame size";
         }
