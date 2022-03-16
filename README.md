@@ -49,7 +49,7 @@ This goes back to displaying the instructions.
 
 ### Visibilty
 
-This section allows you to control the visibility of the output, there are 3 modes
+This section allows you to control the visibility of the output, there are 2 modes
 
 #### Show
 
@@ -59,9 +59,21 @@ This will show the output.
 
 This will hide the output, making it transparent and showing anything underneath in the keyer.
 
-#### Black
+### NDI
 
-This will output opaque black, hiding anything underneath in the keyer.
+This section allows you to control the NDI layer
+
+#### Source
+
+This allows you to select the NDI source to use.
+
+#### Show
+
+This will show the NDI source.
+
+#### Hide
+
+This will hide the NDI source.
 
 ### Upload Video
 
@@ -129,6 +141,14 @@ This is as the [clear](#clear) button.
 #### `/black`
 
 This is as the [black](#black) button.
+
+#### `/show_ndi`
+
+This is as the [NDI/Show](#ndi) button and the source name is taken from the body of the request.
+
+#### `/hide_ndi`
+
+This is as the [NDI/Hide](#hide) button.
 
 ## Building
 
