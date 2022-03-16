@@ -159,9 +159,6 @@ if(OS_MAC)
   target_link_libraries(${CEF_TARGET} libcef_dll_wrapper ${CEF_STANDARD_LIBS})
   target_link_libraries(${CEF_TARGET} SDL2)
 
-  target_link_libraries(${CEF_TARGET} avcodec)
-  target_link_libraries(${CEF_TARGET} avformat)
-
   target_link_libraries(${CEF_TARGET} fmt::fmt)
 
   target_link_libraries(${CEF_TARGET} dl)
