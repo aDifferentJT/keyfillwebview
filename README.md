@@ -144,7 +144,7 @@ This is as the [black](#black) button.
 
 #### `/show_ndi`
 
-This is as the [NDI/Show](#ndi) button and the source name is taken from the body of the request.
+This is as the [NDI/Show](#show-1) button and the source name is taken from the body of the request.
 
 #### `/hide_ndi`
 
