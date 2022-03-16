@@ -99,6 +99,8 @@ if(OS_LINUX)
 
   target_link_libraries(${CEF_TARGET} fmt::fmt)
 
+  target_link_libraries(${CEF_TARGET} dl)
+
   # Set rpath so that libraries can be placed next to the executable.
   set_target_properties(${CEF_TARGET} PROPERTIES INSTALL_RPATH "$ORIGIN")
   set_target_properties(${CEF_TARGET} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
@@ -157,7 +159,12 @@ if(OS_MAC)
   target_link_libraries(${CEF_TARGET} libcef_dll_wrapper ${CEF_STANDARD_LIBS})
   target_link_libraries(${CEF_TARGET} SDL2)
 
+  target_link_libraries(${CEF_TARGET} avcodec)
+  target_link_libraries(${CEF_TARGET} avformat)
+
   target_link_libraries(${CEF_TARGET} fmt::fmt)
+
+  target_link_libraries(${CEF_TARGET} dl)
 
   set_target_properties(${CEF_TARGET} PROPERTIES
     MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/mac/Info.plist

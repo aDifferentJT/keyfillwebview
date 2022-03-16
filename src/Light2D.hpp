@@ -348,6 +348,8 @@ namespace L2D {
       }
 
       void fill(Rect rect, Colour colour, BlendMode blendMode) {
+        SDL_BlendMode oldBlendMode;
+        SDL_GetRenderDrawBlendMode(renderer.get(), &oldBlendMode);
         SDL_SetRenderDrawBlendMode(renderer.get(), blendMode.blendMode);
         SDL_SetRenderDrawColor
           ( renderer.get()
@@ -357,6 +359,7 @@ namespace L2D {
           , colour.a
           );
         SDL_RenderFillRect(renderer.get(), &rect);
+        SDL_SetRenderDrawBlendMode(renderer.get(), oldBlendMode);
       }
 
       void present() { SDL_RenderPresent(renderer.get()); }
