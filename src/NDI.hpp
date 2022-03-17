@@ -34,7 +34,7 @@ public:
 #if OS == APPLE
     auto dir = "/usr/local/lib/"s;
 #elif
-    auto dir = std::string{std::getenv(NDILIB_REDIST_FOLDER)};
+    auto dir = std::string{std::getenv(NDILIB_REDIST_FOLDER)} + "/";
 #endif
     auto path = dir + NDILIB_LIBRARY_NAME;
 
