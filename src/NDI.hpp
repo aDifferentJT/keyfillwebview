@@ -1,6 +1,7 @@
 
 #include "ndi/Processing.NDI.Lib.h"
 
+#include <cstdlib>
 #include <iostream>
 #include <string>
 
@@ -33,7 +34,7 @@ public:
 #if OS == APPLE
     auto dir = "/usr/local/lib/"s;
 #elif
-    auto dir = std::string{NDILIB_REDIST_FOLDER};
+    auto dir = std::string{std::getenv(NDILIB_REDIST_FOLDER)};
 #endif
     auto path = dir + NDILIB_LIBRARY_NAME;
 
@@ -44,9 +45,6 @@ public:
 #endif
     if (!dl) {
       std::cerr << "Can't find NDI lib\n";
-#if defined(WIN32)
-      MessageBox(nullptr, L"Can't find NDI lib", path.c_str(), MB_OK);
-#endif
       std::terminate();
     }
     lib = reinterpret_cast<decltype(&NDIlib_v5_load)>(
