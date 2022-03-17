@@ -45,7 +45,7 @@ public:
     if (!dl) {
       std::cerr << "Can't find NDI lib\n";
 #if defined(WIN32)
-      MessageBox(nullptr, L"Error", L"Can't find NDI lib", MB_OK);
+      MessageBox(nullptr, L"Can't find NDI lib", path.c_str(), MB_OK);
 #endif
       std::terminate();
     }
