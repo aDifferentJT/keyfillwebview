@@ -16,6 +16,8 @@ using namespace std::literals;
 #include <dlfcn.h>
 #elif defined(WIN32)
 #include <windows.h>
+
+#include <AtlConv.h>
 #endif
 
 class NDIlib {
