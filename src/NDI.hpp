@@ -45,6 +45,9 @@ public:
 #endif
     if (!dl) {
       std::cerr << "Can't find NDI lib\n";
+#if defined(WIN32)
+      MessageBox(nullptr, CA2T(path.c_str()), L"Can't find NDI lib", MB_OK);
+#endif
       std::terminate();
     }
     lib = reinterpret_cast<decltype(&NDIlib_v5_load)>(
