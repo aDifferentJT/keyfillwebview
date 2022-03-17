@@ -17,6 +17,7 @@ using namespace std::literals;
 #elif defined(WIN32)
 #include <windows.h>
 
+#include <AtlBase.h>
 #include <AtlConv.h>
 #endif
 
