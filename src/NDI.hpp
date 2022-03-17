@@ -34,7 +34,7 @@ private:
 
 public:
   NDIlib() {
-#if OS == APPLE
+#if defined(__APPLE__)
     auto dir = "/usr/local/lib/"s;
 #elif
     auto dir = std::string{std::getenv(NDILIB_REDIST_FOLDER)} + "/";
